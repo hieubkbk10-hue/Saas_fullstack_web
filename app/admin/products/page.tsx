@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 
 const MODULE_KEY = 'products';
 const PAGE_SIZE_OPTIONS = [12, 20, 30, 50, 100];
@@ -57,6 +58,9 @@ function ProductsContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<Id<"products"> | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
 
   const isSelectAllActive = selectionMode === 'all';
 
@@ -95,6 +99,11 @@ function ProductsContent() {
     categoryId: filterCategory || undefined,
     status: filterStatus || undefined,
   });
+
+  const deleteInfo = useQuery(
+    api.products.getDeleteInfo,
+    deleteTargetId ? { id: deleteTargetId } : 'skip'
+  );
 
   const totalCountData = useQuery(api.products.countAdmin, {
     search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
@@ -245,19 +254,28 @@ function ProductsContent() {
   };
 
   const handleDelete = async (id: Id<"products">) => {
-    if (confirm('Xóa sản phẩm này?')) {
-      try {
-        await deleteProduct({ id });
-        toast.success('Đã xóa sản phẩm');
-      } catch {
-        toast.error('Có lỗi khi xóa sản phẩm');
-      }
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) {return;}
+    setIsDeleteLoading(true);
+    try {
+      await deleteProduct({ cascade: true, id: deleteTargetId });
+      toast.success('Đã xóa sản phẩm');
+      setIsDeleteOpen(false);
+      setDeleteTargetId(null);
+    } catch {
+      toast.error('Có lỗi khi xóa sản phẩm');
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   // FIX #10: Add loading state for bulk delete
   const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} sản phẩm đã chọn?`)) {
+    if (confirm(`Xóa ${selectedIds.length} sản phẩm đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
       setIsDeleting(true);
       try {
         const count = await bulkRemove({ ids: selectedIds });
@@ -505,6 +523,18 @@ function ProductsContent() {
           </div>
         )}
       </Card>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {setDeleteTargetId(null);}
+        }}
+        title="Xóa sản phẩm"
+        itemName={products.find((product) => product.id === deleteTargetId)?.name ?? 'sản phẩm'}
+        dependencies={deleteInfo?.dependencies ?? []}
+        onConfirm={async () => handleConfirmDelete()}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }

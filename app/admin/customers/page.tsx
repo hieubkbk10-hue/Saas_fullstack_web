@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 
 const MODULE_KEY = 'customers';
 
@@ -54,6 +55,9 @@ function CustomersContent() {
   const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<Id<"customers"> | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
 
   const isSelectAllActive = selectionMode === 'all';
 
@@ -84,6 +88,11 @@ function CustomersContent() {
     search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
     status: filterStatus || undefined,
   });
+
+  const deleteInfo = useQuery(
+    api.customers.getDeleteInfo,
+    deleteTargetId ? { id: deleteTargetId } : 'skip'
+  );
 
   const totalCountData = useQuery(api.customers.countAdmin, {
     search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
@@ -205,20 +214,29 @@ function CustomersContent() {
   };
 
   const handleDelete = async (id: Id<"customers">) => {
-    if (confirm('Xóa khách hàng này? Các đơn hàng liên quan sẽ được giữ lại.')) {
-      try {
-        await deleteCustomer({ cascadeOrders: false, id });
-        toast.success('Đã xóa khách hàng');
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Có lỗi khi xóa khách hàng';
-        toast.error(message);
-      }
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) {return;}
+    setIsDeleteLoading(true);
+    try {
+      await deleteCustomer({ cascade: true, id: deleteTargetId });
+      toast.success('Đã xóa khách hàng');
+      setIsDeleteOpen(false);
+      setDeleteTargetId(null);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Có lỗi khi xóa khách hàng';
+      toast.error(message);
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   // CUST-007 FIX: Bulk delete with progress indicator
   const handleBulkDelete = async () => {
-    if (!confirm(`Xóa ${selectedIds.length} khách hàng đã chọn?`)) {return;}
+    if (!confirm(`Xóa ${selectedIds.length} khách hàng đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {return;}
     
     const total = selectedIds.length;
     let deleted = 0;
@@ -228,7 +246,7 @@ function CustomersContent() {
     
     for (const id of selectedIds) {
       try {
-        await deleteCustomer({ cascadeOrders: false, id });
+        await deleteCustomer({ cascade: true, id });
         deleted++;
         toast.loading(`Đang xóa ${deleted}/${total}...`);
       } catch {
@@ -489,6 +507,18 @@ function CustomersContent() {
           </div>
         )}
       </Card>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {setDeleteTargetId(null);}
+        }}
+        title="Xóa khách hàng"
+        itemName={customers.find((customer) => customer.id === deleteTargetId)?.name ?? 'khách hàng'}
+        dependencies={deleteInfo?.dependencies ?? []}
+        onConfirm={async () => handleConfirmDelete()}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }

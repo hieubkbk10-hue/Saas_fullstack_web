@@ -95,12 +95,26 @@ export const update = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("serviceCategories") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("serviceCategories") },
   handler: async (ctx, args) => {
     await CategoriesModel.remove(ctx, args);
     return null;
   },
   returns: v.null(),
+});
+
+export const getDeleteInfo = query({
+  args: { id: v.id("serviceCategories") },
+  handler: async (ctx, args) => CategoriesModel.getDeleteInfo(ctx, args),
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
 });
 
 export const reorder = mutation({

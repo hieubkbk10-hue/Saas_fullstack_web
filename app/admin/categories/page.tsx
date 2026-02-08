@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 
 export default function CategoriesListPage() {
   return (
@@ -45,6 +46,9 @@ function CategoriesContent() {
   const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<Id<"productCategories"> | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
 
   const isSelectAllActive = selectionMode === 'all';
 
@@ -69,6 +73,11 @@ function CategoriesContent() {
     offset,
     search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
   });
+
+  const deleteInfo = useQuery(
+    api.productCategories.getDeleteInfo,
+    deleteTargetId ? { id: deleteTargetId } : 'skip'
+  );
 
   const totalCountData = useQuery(api.productCategories.countAdmin, {
     search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
@@ -163,21 +172,30 @@ function CategoriesContent() {
   };
 
   const handleDelete = async (id: Id<"productCategories">) => {
-    if (confirm('Xóa danh mục này?')) {
-      try {
-        await deleteCategory({ id });
-        toast.success('Đã xóa danh mục');
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Không thể xóa danh mục');
-      }
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) {return;}
+    setIsDeleteLoading(true);
+    try {
+      await deleteCategory({ cascade: true, id: deleteTargetId });
+      toast.success('Đã xóa danh mục');
+      setIsDeleteOpen(false);
+      setDeleteTargetId(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể xóa danh mục');
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} danh mục đã chọn?`)) {
+    if (confirm(`Xóa ${selectedIds.length} danh mục đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
       try {
         for (const id of selectedIds) {
-          await deleteCategory({ id });
+          await deleteCategory({ cascade: true, id });
         }
         applyManualSelection([]);
         toast.success(`Đã xóa ${selectedIds.length} danh mục`);
@@ -370,6 +388,18 @@ function CategoriesContent() {
           </div>
         )}
       </Card>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {setDeleteTargetId(null);}
+        }}
+        title="Xóa danh mục sản phẩm"
+        itemName={categories.find((cat) => cat.id === deleteTargetId)?.name ?? 'danh mục'}
+        dependencies={deleteInfo?.dependencies ?? []}
+        onConfirm={async () => handleConfirmDelete()}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }

@@ -278,44 +278,87 @@ export const updateStats = mutation({
 });
 
 export const remove = mutation({
-  args: { cascadeOrders: v.optional(v.boolean()), id: v.id("customers") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("customers") },
   handler: async (ctx, args) => {
     const customer = await ctx.db.get(args.id);
     if (!customer) {throw new Error("Customer not found");}
 
-    // Check for related orders
-    const orders = await ctx.db
-      .query("orders")
-      .withIndex("by_customer", (q) => q.eq("customerId", args.id))
-      .collect();
-
-    if (orders.length > 0) {
-      if (args.cascadeOrders) {
-        // CUST-001 FIX: Cascade delete all orders using Promise.all
-        await Promise.all(orders.map( async order => ctx.db.delete(order._id)));
-      } else {
-        throw new Error(`Không thể xóa khách hàng vì còn ${orders.length} đơn hàng liên quan. Vui lòng xóa đơn hàng trước hoặc chọn cascade delete.`);
-      }
-    }
-
-    // CUST-001 FIX: Parallel fetch related data
-    const [carts, wishlistItems, comments] = await Promise.all([
+    const [orders, carts, wishlistItems, comments] = await Promise.all([
+      ctx.db.query("orders").withIndex("by_customer", (q) => q.eq("customerId", args.id)).collect(),
       ctx.db.query("carts").withIndex("by_customer", (q) => q.eq("customerId", args.id)).collect(),
       ctx.db.query("wishlist").withIndex("by_customer", (q) => q.eq("customerId", args.id)).collect(),
       ctx.db.query("comments").withIndex("by_customer", (q) => q.eq("customerId", args.id)).collect(),
     ]);
 
-    // CUST-001 FIX: Parallel delete all related records
-    await Promise.all([
-      ...carts.map( async cart => ctx.db.delete(cart._id)),
-      ...wishlistItems.map( async item => ctx.db.delete(item._id)),
-      ...comments.map( async comment => ctx.db.delete(comment._id)),
-    ]);
+    if (!args.cascade && (orders.length > 0 || carts.length > 0 || wishlistItems.length > 0 || comments.length > 0)) {
+      throw new Error("Khách hàng có dữ liệu liên quan. Vui lòng xác nhận xóa tất cả.");
+    }
+
+    if (args.cascade) {
+      await Promise.all([
+        ...orders.map( async order => ctx.db.delete(order._id)),
+        ...carts.map( async cart => ctx.db.delete(cart._id)),
+        ...wishlistItems.map( async item => ctx.db.delete(item._id)),
+        ...comments.map( async comment => ctx.db.delete(comment._id)),
+      ]);
+    }
 
     await ctx.db.delete(args.id);
     return null;
   },
   returns: v.null(),
+});
+
+export const getDeleteInfo = query({
+  args: { id: v.id("customers") },
+  handler: async (ctx, args) => {
+    const [ordersPreview, ordersCount, cartsCount, wishlistCount, commentsCount] = await Promise.all([
+      ctx.db.query("orders").withIndex("by_customer", (q) => q.eq("customerId", args.id)).take(10),
+      ctx.db.query("orders").withIndex("by_customer", (q) => q.eq("customerId", args.id)).take(1001),
+      ctx.db.query("carts").withIndex("by_customer", (q) => q.eq("customerId", args.id)).take(1001),
+      ctx.db.query("wishlist").withIndex("by_customer", (q) => q.eq("customerId", args.id)).take(1001),
+      ctx.db.query("comments").withIndex("by_customer", (q) => q.eq("customerId", args.id)).take(1001),
+    ]);
+
+    return {
+      canDelete: true,
+      dependencies: [
+        {
+          count: Math.min(ordersCount.length, 1000),
+          hasMore: ordersCount.length > 1000,
+          label: "Đơn hàng",
+          preview: ordersPreview.map((order) => ({ id: order._id, name: order.orderNumber })),
+        },
+        {
+          count: Math.min(cartsCount.length, 1000),
+          hasMore: cartsCount.length > 1000,
+          label: "Giỏ hàng",
+          preview: [],
+        },
+        {
+          count: Math.min(wishlistCount.length, 1000),
+          hasMore: wishlistCount.length > 1000,
+          label: "Wishlist",
+          preview: [],
+        },
+        {
+          count: Math.min(commentsCount.length, 1000),
+          hasMore: commentsCount.length > 1000,
+          label: "Bình luận",
+          preview: [],
+        },
+      ],
+    };
+  },
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
 });
 
 // Efficient count using take() instead of collect()

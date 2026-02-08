@@ -144,27 +144,95 @@ export async function update(
 
 export async function remove(
   ctx: MutationCtx,
-  { id }: { id: Id<"serviceCategories"> }
+  { cascade, id }: { cascade?: boolean; id: Id<"serviceCategories"> }
 ): Promise<void> {
-  const services = await ctx.db
-    .query("services")
-    .withIndex("by_category_status", (q) => q.eq("categoryId", id))
-    .take(1);
-  
-  if (services.length > 0) {
-    throw new Error("Cannot delete category with services. Please move or delete services first.");
-  }
+  const category = await ctx.db.get(id);
+  if (!category) {throw new Error("Service category not found");}
 
-  const children = await ctx.db
+  const childPreview = await ctx.db
     .query("serviceCategories")
     .withIndex("by_parent", (q) => q.eq("parentId", id))
     .take(1);
-  
-  if (children.length > 0) {
-    throw new Error("Cannot delete category with sub-categories. Please delete sub-categories first.");
+  if (childPreview.length > 0 && !cascade) {
+    throw new Error("Danh mục có danh mục con. Vui lòng xác nhận xóa tất cả.");
+  }
+
+  const servicePreview = await ctx.db
+    .query("services")
+    .withIndex("by_category_status", (q) => q.eq("categoryId", id))
+    .take(1);
+  if (servicePreview.length > 0 && !cascade) {
+    throw new Error("Danh mục có dịch vụ liên quan. Vui lòng xác nhận xóa tất cả.");
+  }
+
+  if (cascade) {
+    const queue: Doc<"serviceCategories">[] = [category];
+    const categoryIds: Id<"serviceCategories">[] = [];
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current) {continue;}
+      categoryIds.push(current._id);
+      const children = await ctx.db
+        .query("serviceCategories")
+        .withIndex("by_parent", (q) => q.eq("parentId", current._id))
+        .collect();
+      queue.push(...children);
+    }
+
+    const servicesByCategory = await Promise.all(
+      categoryIds.map((categoryId) => ctx.db
+          .query("services")
+          .withIndex("by_category_status", (q) => q.eq("categoryId", categoryId))
+          .collect())
+    );
+    const serviceIds = servicesByCategory.flat().map((service) => service._id);
+    await Promise.all(serviceIds.map((serviceId) => ctx.db.delete(serviceId)));
+    await Promise.all(categoryIds.map((categoryId) => ctx.db.delete(categoryId)));
+    return;
   }
 
   await ctx.db.delete(id);
+}
+
+export async function getDeleteInfo(
+  ctx: QueryCtx,
+  { id }: { id: Id<"serviceCategories"> }
+): Promise<{ canDelete: boolean; dependencies: { count: number; hasMore: boolean; label: string; preview: { id: string; name: string }[] }[] }> {
+  const childrenPreview = await ctx.db
+    .query("serviceCategories")
+    .withIndex("by_parent", (q) => q.eq("parentId", id))
+    .take(10);
+  const childrenCount = await ctx.db
+    .query("serviceCategories")
+    .withIndex("by_parent", (q) => q.eq("parentId", id))
+    .take(1001);
+  const servicesPreview = await ctx.db
+    .query("services")
+    .withIndex("by_category_status", (q) => q.eq("categoryId", id))
+    .take(10);
+  const servicesCount = await ctx.db
+    .query("services")
+    .withIndex("by_category_status", (q) => q.eq("categoryId", id))
+    .take(1001);
+
+  return {
+    canDelete: true,
+    dependencies: [
+      {
+        count: Math.min(childrenCount.length, 1000),
+        hasMore: childrenCount.length > 1000,
+        label: "Danh mục con",
+        preview: childrenPreview.map((child) => ({ id: child._id, name: child.name })),
+      },
+      {
+        count: Math.min(servicesCount.length, 1000),
+        hasMore: servicesCount.length > 1000,
+        label: "Dịch vụ",
+        preview: servicesPreview.map((service) => ({ id: service._id, name: service.title })),
+      },
+    ],
+  };
 }
 
 export async function reorder(

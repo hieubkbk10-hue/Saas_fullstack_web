@@ -799,45 +799,124 @@ export const incrementSales = mutation({
 
 // FIX #7: Batch delete with Promise.all for cascade operations
 export const remove = mutation({
-  args: { id: v.id("products") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("products") },
   handler: async (ctx, args) => {
     const product = await ctx.db.get(args.id);
     if (!product) {throw new Error("Product not found");}
 
-    // Collect all related items first
-    const [comments, wishlistItems, cartItems] = await Promise.all([
+    const [commentPreview, wishlistPreview, cartPreview, variantPreview] = await Promise.all([
       ctx.db
         .query("comments")
         .withIndex("by_target_status", (q) =>
           q.eq("targetType", "product").eq("targetId", args.id)
         )
-        .collect(),
+        .take(1),
       ctx.db
         .query("wishlist")
         .withIndex("by_product", (q) => q.eq("productId", args.id))
-        .collect(),
+        .take(1),
       ctx.db
         .query("cartItems")
         .withIndex("by_product", (q) => q.eq("productId", args.id))
-        .collect(),
+        .take(1),
+      ctx.db
+        .query("productVariants")
+        .withIndex("by_product", (q) => q.eq("productId", args.id))
+        .take(1),
     ]);
 
-    // Batch delete all related items with Promise.all
-    await Promise.all([
-      ...comments.map( async (c) => ctx.db.delete(c._id)),
-      ...wishlistItems.map( async (w) => ctx.db.delete(w._id)),
-      ...cartItems.map( async (c) => ctx.db.delete(c._id)),
-    ]);
+    if (!args.cascade && (commentPreview.length > 0 || wishlistPreview.length > 0 || cartPreview.length > 0 || variantPreview.length > 0)) {
+      throw new Error("Sản phẩm có dữ liệu liên quan. Vui lòng xác nhận xóa tất cả.");
+    }
 
-    // Delete the product
+    if (args.cascade) {
+      const [comments, wishlistItems, cartItems, variants] = await Promise.all([
+        ctx.db
+          .query("comments")
+          .withIndex("by_target_status", (q) =>
+            q.eq("targetType", "product").eq("targetId", args.id)
+          )
+          .collect(),
+        ctx.db
+          .query("wishlist")
+          .withIndex("by_product", (q) => q.eq("productId", args.id))
+          .collect(),
+        ctx.db
+          .query("cartItems")
+          .withIndex("by_product", (q) => q.eq("productId", args.id))
+          .collect(),
+        ctx.db
+          .query("productVariants")
+          .withIndex("by_product", (q) => q.eq("productId", args.id))
+          .collect(),
+      ]);
+
+      await Promise.all([
+        ...comments.map( async (c) => ctx.db.delete(c._id)),
+        ...wishlistItems.map( async (w) => ctx.db.delete(w._id)),
+        ...cartItems.map( async (c) => ctx.db.delete(c._id)),
+        ...variants.map( async (variant) => ctx.db.delete(variant._id)),
+      ]);
+    }
+
     await ctx.db.delete(args.id);
-
-    // Update stats
     await updateStats(ctx, { old: product.status });
 
     return null;
   },
   returns: v.null(),
+});
+
+export const getDeleteInfo = query({
+  args: { id: v.id("products") },
+  handler: async (ctx, args) => {
+    const [variantsPreview, variantsCount, commentsCount, wishlistCount, cartCount] = await Promise.all([
+      ctx.db.query("productVariants").withIndex("by_product", (q) => q.eq("productId", args.id)).take(10),
+      ctx.db.query("productVariants").withIndex("by_product", (q) => q.eq("productId", args.id)).take(1001),
+      ctx.db.query("comments").withIndex("by_target_status", (q) => q.eq("targetType", "product").eq("targetId", args.id)).take(1001),
+      ctx.db.query("wishlist").withIndex("by_product", (q) => q.eq("productId", args.id)).take(1001),
+      ctx.db.query("cartItems").withIndex("by_product", (q) => q.eq("productId", args.id)).take(1001),
+    ]);
+
+    return {
+      canDelete: true,
+      dependencies: [
+        {
+          count: Math.min(variantsCount.length, 1000),
+          hasMore: variantsCount.length > 1000,
+          label: "Biến thể",
+          preview: variantsPreview.map((variant) => ({ id: variant._id, name: variant.sku })),
+        },
+        {
+          count: Math.min(commentsCount.length, 1000),
+          hasMore: commentsCount.length > 1000,
+          label: "Bình luận",
+          preview: [],
+        },
+        {
+          count: Math.min(wishlistCount.length, 1000),
+          hasMore: wishlistCount.length > 1000,
+          label: "Wishlist",
+          preview: [],
+        },
+        {
+          count: Math.min(cartCount.length, 1000),
+          hasMore: cartCount.length > 1000,
+          label: "Giỏ hàng",
+          preview: [],
+        },
+      ],
+    };
+  },
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
 });
 
 // FIX #4: Batch reorder with Promise.all

@@ -217,24 +217,55 @@ export async function update(
  */
 export async function remove(
   ctx: MutationCtx,
-  { id }: { id: Id<"postCategories"> }
+  { cascade, id }: { cascade?: boolean; id: Id<"postCategories"> }
 ): Promise<void> {
-  const children = await ctx.db
+  const category = await ctx.db.get(id);
+  if (!category) {throw new Error("Category not found");}
+
+  const childPreview = await ctx.db
     .query("postCategories")
     .withIndex("by_parent", (q) => q.eq("parentId", id))
-    .take(100);
-  if (children.length > 0) {
-    throw new Error(`Không thể xóa danh mục có ${children.length} danh mục con. Vui lòng xóa hoặc di chuyển danh mục con trước.`);
+    .take(1);
+  if (childPreview.length > 0 && !cascade) {
+    throw new Error("Danh mục có danh mục con. Vui lòng xác nhận xóa tất cả.");
   }
   
-  const posts = await ctx.db
+  const postPreview = await ctx.db
     .query("posts")
     .withIndex("by_category_status", (q) => q.eq("categoryId", id))
-    .take(100);
-  if (posts.length > 0) {
-    throw new Error(`Không thể xóa danh mục có ${posts.length} bài viết. Vui lòng xóa hoặc di chuyển bài viết trước.`);
+    .take(1);
+  if (postPreview.length > 0 && !cascade) {
+    throw new Error("Danh mục có bài viết liên quan. Vui lòng xác nhận xóa tất cả.");
   }
-  
+
+  if (cascade) {
+    const queue: Doc<"postCategories">[] = [category];
+    const categoryIds: Id<"postCategories">[] = [];
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current) {continue;}
+      categoryIds.push(current._id);
+      const children = await ctx.db
+        .query("postCategories")
+        .withIndex("by_parent", (q) => q.eq("parentId", current._id))
+        .collect();
+      queue.push(...children);
+    }
+
+    const postsByCategory = await Promise.all(
+      categoryIds.map((categoryId) => ctx.db
+          .query("posts")
+          .withIndex("by_category_status", (q) => q.eq("categoryId", categoryId))
+          .collect())
+    );
+
+    const postIds = postsByCategory.flat().map((post) => post._id);
+    await Promise.all(postIds.map((postId) => ctx.db.delete(postId)));
+    await Promise.all(categoryIds.map((categoryId) => ctx.db.delete(categoryId)));
+    return;
+  }
+
   await ctx.db.delete(id);
 }
 
@@ -244,21 +275,41 @@ export async function remove(
 export async function getDeleteInfo(
   ctx: QueryCtx,
   { id }: { id: Id<"postCategories"> }
-): Promise<{ childrenCount: number; postsCount: number; canDelete: boolean }> {
-  const children = await ctx.db
+): Promise<{ canDelete: boolean; dependencies: { count: number; hasMore: boolean; label: string; preview: { id: string; name: string }[] }[] }> {
+  const childrenPreview = await ctx.db
     .query("postCategories")
     .withIndex("by_parent", (q) => q.eq("parentId", id))
-    .take(100);
+    .take(10);
+  const childrenCount = await ctx.db
+    .query("postCategories")
+    .withIndex("by_parent", (q) => q.eq("parentId", id))
+    .take(1001);
   
-  const posts = await ctx.db
+  const postsPreview = await ctx.db
     .query("posts")
     .withIndex("by_category_status", (q) => q.eq("categoryId", id))
-    .take(100);
+    .take(10);
+  const postsCount = await ctx.db
+    .query("posts")
+    .withIndex("by_category_status", (q) => q.eq("categoryId", id))
+    .take(1001);
   
   return {
-    canDelete: children.length === 0 && posts.length === 0,
-    childrenCount: children.length,
-    postsCount: posts.length,
+    canDelete: true,
+    dependencies: [
+      {
+        count: Math.min(childrenCount.length, 1000),
+        hasMore: childrenCount.length > 1000,
+        label: "Danh mục con",
+        preview: childrenPreview.map((child) => ({ id: child._id, name: child.name })),
+      },
+      {
+        count: Math.min(postsCount.length, 1000),
+        hasMore: postsCount.length > 1000,
+        label: "Bài viết",
+        preview: postsPreview.map((post) => ({ id: post._id, name: post.title })),
+      },
+    ],
   };
 }
 

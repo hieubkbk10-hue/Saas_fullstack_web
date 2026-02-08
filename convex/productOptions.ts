@@ -246,23 +246,66 @@ export const update = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("productOptions") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("productOptions") },
   handler: async (ctx, args) => {
     const option = await ctx.db.get(args.id);
     if (!option) {throw new Error("Option không tồn tại");}
 
-    const values = await ctx.db
+    const valuesPreview = await ctx.db
       .query("productOptionValues")
       .withIndex("by_option", (q) => q.eq("optionId", args.id))
       .take(1);
-    if (values.length > 0) {
-      throw new Error("Không thể xóa option vì còn giá trị liên quan");
+    if (valuesPreview.length > 0 && !args.cascade) {
+      throw new Error("Option có giá trị liên quan. Vui lòng xác nhận xóa tất cả.");
+    }
+
+    if (args.cascade) {
+      const values = await ctx.db
+        .query("productOptionValues")
+        .withIndex("by_option", (q) => q.eq("optionId", args.id))
+        .collect();
+      await Promise.all(values.map( async (value) => ctx.db.delete(value._id)));
     }
 
     await ctx.db.delete(args.id);
     return null;
   },
   returns: v.null(),
+});
+
+export const getDeleteInfo = query({
+  args: { id: v.id("productOptions") },
+  handler: async (ctx, args) => {
+    const valuesPreview = await ctx.db
+      .query("productOptionValues")
+      .withIndex("by_option", (q) => q.eq("optionId", args.id))
+      .take(10);
+    const valuesCount = await ctx.db
+      .query("productOptionValues")
+      .withIndex("by_option", (q) => q.eq("optionId", args.id))
+      .take(1001);
+
+    return {
+      canDelete: true,
+      dependencies: [
+        {
+          count: Math.min(valuesCount.length, 1000),
+          hasMore: valuesCount.length > 1000,
+          label: "Giá trị option",
+          preview: valuesPreview.map((value) => ({ id: value._id, name: value.label ?? value.value })),
+        },
+      ],
+    };
+  },
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
 });
 
 export const reorder = mutation({

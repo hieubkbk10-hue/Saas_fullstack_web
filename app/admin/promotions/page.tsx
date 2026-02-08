@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 
 const MODULE_KEY = 'promotions';
 
@@ -52,6 +53,9 @@ function PromotionsContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<Id<"promotions"> | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
 
   const isSelectAllActive = selectionMode === 'all';
 
@@ -84,6 +88,11 @@ function PromotionsContent() {
     status: filterStatus || undefined,
     discountType: filterType || undefined,
   }) as Doc<'promotions'>[] | undefined;
+
+  const deleteInfo = useQuery(
+    api.promotions.getDeleteInfo,
+    deleteTargetId ? { id: deleteTargetId } : 'skip'
+  );
 
   const totalCountData = useQuery(api.promotions.countAdmin, {
     search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
@@ -201,22 +210,31 @@ function PromotionsContent() {
 
   // TICKET #10 FIX: Show detailed error message
   const handleDelete = async (id: Id<"promotions">) => {
-    if (confirm('Xóa khuyến mãi này?')) {
-      try {
-        await deletePromotion({ id });
-        toast.success('Đã xóa khuyến mãi');
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa khuyến mãi');
-      }
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) {return;}
+    setIsDeleteLoading(true);
+    try {
+      await deletePromotion({ cascade: true, id: deleteTargetId });
+      toast.success('Đã xóa khuyến mãi');
+      setIsDeleteOpen(false);
+      setDeleteTargetId(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa khuyến mãi');
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   // HIGH-006 FIX: Dùng Promise.all thay vì sequential
   // TICKET #10 FIX: Show detailed error message
   const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} khuyến mãi đã chọn?`)) {
+    if (confirm(`Xóa ${selectedIds.length} khuyến mãi đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
       try {
-        await Promise.all(selectedIds.map( async id => deletePromotion({ id })));
+        await Promise.all(selectedIds.map( async id => deletePromotion({ cascade: true, id })));
         applyManualSelection([]);
         toast.success(`Đã xóa ${selectedIds.length} khuyến mãi`);
       } catch (error) {
@@ -554,6 +572,18 @@ function PromotionsContent() {
           </div>
         )}
       </Card>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {setDeleteTargetId(null);}
+        }}
+        title="Xóa khuyến mãi"
+        itemName={promotions.find((promo) => promo.id === deleteTargetId)?.name ?? 'khuyến mãi'}
+        dependencies={deleteInfo?.dependencies ?? []}
+        onConfirm={async () => handleConfirmDelete()}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from '../components/ui';
 import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -117,6 +118,14 @@ function ProductOptionsContent() {
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: 'order' });
   const [visibleColumns, setVisibleColumns] = useState(['select', 'drag', 'name', 'slug', 'displayType', 'unit', 'preset', 'status', 'actions']);
   const [selectedIds, setSelectedIds] = useState<Id<'productOptions'>[]>([]);
+  const [deleteTargetId, setDeleteTargetId] = useState<Id<'productOptions'> | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+
+  const deleteInfo = useQuery(
+    api.productOptions.getDeleteInfo,
+    deleteTargetId ? { id: deleteTargetId } : 'skip'
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -175,20 +184,30 @@ function ProductOptionsContent() {
   };
 
   const handleDelete = async (id: Id<'productOptions'>) => {
-    if (!confirm('Xóa option này?')) {return;}
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) {return;}
+    setIsDeleteLoading(true);
     try {
-      await removeOption({ id });
+      await removeOption({ cascade: true, id: deleteTargetId });
       toast.success('Đã xóa option');
+      setIsDeleteOpen(false);
+      setDeleteTargetId(null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Không thể xóa option');
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) {return;}
-    if (!confirm(`Xóa ${selectedIds.length} option đã chọn?`)) {return;}
+    if (!confirm(`Xóa ${selectedIds.length} option đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {return;}
     try {
-      await Promise.all(selectedIds.map(async (id) => removeOption({ id })));
+      await Promise.all(selectedIds.map(async (id) => removeOption({ cascade: true, id })));
       setSelectedIds([]);
       toast.success(`Đã xóa ${selectedIds.length} option`);
     } catch (error) {
@@ -327,6 +346,18 @@ function ProductOptionsContent() {
           </div>
         )}
       </Card>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {setDeleteTargetId(null);}
+        }}
+        title="Xóa option"
+        itemName={sortedData.find((option) => option._id === deleteTargetId)?.name ?? 'option'}
+        dependencies={deleteInfo?.dependencies ?? []}
+        onConfirm={async () => handleConfirmDelete()}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }

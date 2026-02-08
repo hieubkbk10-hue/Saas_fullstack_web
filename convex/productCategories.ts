@@ -1,6 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 
 const categoryDoc = v.object({
   _creationTime: v.number(),
@@ -214,24 +214,55 @@ export const update = mutation({
 
 // FIX HIGH-004: Add count info for better error messages
 export const remove = mutation({
-  args: { id: v.id("productCategories") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("productCategories") },
   handler: async (ctx, args) => {
-    const children = await ctx.db
+    const category = await ctx.db.get(args.id);
+    if (!category) {throw new Error("Category not found");}
+
+    const childPreview = await ctx.db
       .query("productCategories")
       .withIndex("by_parent", (q) => q.eq("parentId", args.id))
-      .take(100);
-    if (children.length > 0) {
-      throw new Error(`Không thể xóa danh mục có ${children.length} danh mục con. Vui lòng xóa hoặc di chuyển danh mục con trước.`);
+      .take(1);
+    if (childPreview.length > 0 && !args.cascade) {
+      throw new Error("Danh mục có danh mục con. Vui lòng xác nhận xóa tất cả.");
     }
-    
-    const products = await ctx.db
+
+    const productPreview = await ctx.db
       .query("products")
       .withIndex("by_category_status", (q) => q.eq("categoryId", args.id))
-      .take(100);
-    if (products.length > 0) {
-      throw new Error(`Không thể xóa danh mục có ${products.length} sản phẩm. Vui lòng xóa hoặc di chuyển sản phẩm trước.`);
+      .take(1);
+    if (productPreview.length > 0 && !args.cascade) {
+      throw new Error("Danh mục có sản phẩm liên quan. Vui lòng xác nhận xóa tất cả.");
     }
-    
+
+    if (args.cascade) {
+      const queue: Doc<"productCategories">[] = [category];
+      const categoryIds: Id<"productCategories">[] = [];
+
+      while (queue.length > 0) {
+        const current = queue.shift();
+        if (!current) {continue;}
+        categoryIds.push(current._id);
+        const children = await ctx.db
+          .query("productCategories")
+          .withIndex("by_parent", (q) => q.eq("parentId", current._id))
+          .collect();
+        queue.push(...children);
+      }
+
+      const productsByCategory = await Promise.all(
+        categoryIds.map((categoryId) => ctx.db
+            .query("products")
+            .withIndex("by_category_status", (q) => q.eq("categoryId", categoryId))
+            .collect())
+      );
+
+      const productIds = productsByCategory.flat().map((product) => product._id);
+      await Promise.all(productIds.map((id) => ctx.db.delete(id)));
+      await Promise.all(categoryIds.map((id) => ctx.db.delete(id)));
+      return null;
+    }
+
     await ctx.db.delete(args.id);
     return null;
   },
@@ -242,26 +273,50 @@ export const remove = mutation({
 export const getDeleteInfo = query({
   args: { id: v.id("productCategories") },
   handler: async (ctx, args) => {
-    const children = await ctx.db
+    const childrenPreview = await ctx.db
       .query("productCategories")
       .withIndex("by_parent", (q) => q.eq("parentId", args.id))
-      .take(100);
-    
-    const products = await ctx.db
+      .take(10);
+    const childrenCount = await ctx.db
+      .query("productCategories")
+      .withIndex("by_parent", (q) => q.eq("parentId", args.id))
+      .take(1001);
+
+    const productsPreview = await ctx.db
       .query("products")
       .withIndex("by_category_status", (q) => q.eq("categoryId", args.id))
-      .take(100);
-    
+      .take(10);
+    const productsCount = await ctx.db
+      .query("products")
+      .withIndex("by_category_status", (q) => q.eq("categoryId", args.id))
+      .take(1001);
+
     return {
-      canDelete: children.length === 0 && products.length === 0,
-      childrenCount: children.length,
-      productsCount: products.length,
+      canDelete: true,
+      dependencies: [
+        {
+          count: Math.min(childrenCount.length, 1000),
+          hasMore: childrenCount.length > 1000,
+          label: "Danh mục con",
+          preview: childrenPreview.map((child) => ({ id: child._id, name: child.name })),
+        },
+        {
+          count: Math.min(productsCount.length, 1000),
+          hasMore: productsCount.length > 1000,
+          label: "Sản phẩm",
+          preview: productsPreview.map((product) => ({ id: product._id, name: product.name })),
+        },
+      ],
     };
   },
   returns: v.object({
     canDelete: v.boolean(),
-    childrenCount: v.number(),
-    productsCount: v.number(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
   }),
 });
 

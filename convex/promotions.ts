@@ -558,10 +558,26 @@ export const incrementUsage = mutation({
 
 // HIGH-004 FIX: Update counters khi remove
 export const remove = mutation({
-  args: { id: v.id("promotions") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("promotions") },
   handler: async (ctx, args) => {
     const promotion = await ctx.db.get(args.id);
     if (!promotion) {throw new Error("Promotion not found");}
+
+    const usagePreview = await ctx.db
+      .query("promotionUsage")
+      .withIndex("by_promotion", (q) => q.eq("promotionId", args.id))
+      .take(1);
+    if (usagePreview.length > 0 && !args.cascade) {
+      throw new Error("Khuyến mãi đã có lịch sử sử dụng. Vui lòng xác nhận xóa tất cả.");
+    }
+
+    if (args.cascade) {
+      const usage = await ctx.db
+        .query("promotionUsage")
+        .withIndex("by_promotion", (q) => q.eq("promotionId", args.id))
+        .collect();
+      await Promise.all(usage.map( async (record) => ctx.db.delete(record._id)));
+    }
     
     await ctx.db.delete(args.id);
     
@@ -577,6 +593,41 @@ export const remove = mutation({
     return null;
   },
   returns: v.null(),
+});
+
+export const getDeleteInfo = query({
+  args: { id: v.id("promotions") },
+  handler: async (ctx, args) => {
+    const preview = await ctx.db
+      .query("promotionUsage")
+      .withIndex("by_promotion", (q) => q.eq("promotionId", args.id))
+      .take(10);
+    const count = await ctx.db
+      .query("promotionUsage")
+      .withIndex("by_promotion", (q) => q.eq("promotionId", args.id))
+      .take(1001);
+
+    return {
+      canDelete: true,
+      dependencies: [
+        {
+          count: Math.min(count.length, 1000),
+          hasMore: count.length > 1000,
+          label: "Lịch sử sử dụng",
+          preview: preview.map((usage) => ({ id: usage._id, name: usage.orderId })),
+        },
+      ],
+    };
+  },
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
 });
 
 // HIGH-004 FIX: Dùng counter table thay vì fetch ALL

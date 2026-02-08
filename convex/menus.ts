@@ -85,17 +85,66 @@ export const updateMenu = mutation({
 
 // TICKET #4 FIX: Dùng Promise.all thay vì sequential deletes
 export const removeMenu = mutation({
-  args: { id: v.id("menus") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("menus") },
   handler: async (ctx, args) => {
-    const items = await ctx.db
+    const menu = await ctx.db.get(args.id);
+    if (!menu) {throw new Error("Menu not found");}
+
+    const preview = await ctx.db
       .query("menuItems")
       .withIndex("by_menu_order", (q) => q.eq("menuId", args.id))
-      .collect();
-    await Promise.all(items.map( async item => ctx.db.delete(item._id)));
+      .take(1);
+    if (preview.length > 0 && !args.cascade) {
+      throw new Error("Menu có items liên quan. Vui lòng xác nhận xóa tất cả.");
+    }
+
+    if (args.cascade) {
+      const items = await ctx.db
+        .query("menuItems")
+        .withIndex("by_menu_order", (q) => q.eq("menuId", args.id))
+        .collect();
+      await Promise.all(items.map( async item => ctx.db.delete(item._id)));
+    }
+
     await ctx.db.delete(args.id);
     return null;
   },
   returns: v.null(),
+});
+
+export const getDeleteInfo = query({
+  args: { id: v.id("menus") },
+  handler: async (ctx, args) => {
+    const preview = await ctx.db
+      .query("menuItems")
+      .withIndex("by_menu_order", (q) => q.eq("menuId", args.id))
+      .take(10);
+    const count = await ctx.db
+      .query("menuItems")
+      .withIndex("by_menu_order", (q) => q.eq("menuId", args.id))
+      .take(1001);
+
+    return {
+      canDelete: true,
+      dependencies: [
+        {
+          count: Math.min(count.length, 1000),
+          hasMore: count.length > 1000,
+          label: "Menu items",
+          preview: preview.map((item) => ({ id: item._id, name: item.label })),
+        },
+      ],
+    };
+  },
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
 });
 
 // ============ MENU ITEMS ============
