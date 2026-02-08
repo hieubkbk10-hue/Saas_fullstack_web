@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight, CheckCircle2, Clock, DollarSign, Package, ShoppingBag } from 'lucide-react';
 import { StatusFilterDropdown } from '@/components/orders/StatusFilterDropdown';
+import { OrderDetailDrawer } from '@/components/orders/OrderDetailDrawer';
 import { toast } from 'sonner';
 
 type AccountOrdersPreviewProps = {
@@ -318,6 +319,7 @@ export function AccountOrdersPreview({
   }, [statusKeys]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [drawerOrder, setDrawerOrder] = useState<(typeof mockOrders)[number] | null>(null);
   const activeStatuses = selectedStatuses.length > 0
     ? selectedStatuses
     : (normalizedDefaultStatuses.length > 0 ? normalizedDefaultStatuses : statusKeys);
@@ -364,6 +366,14 @@ export function AccountOrdersPreview({
       toast.error('Tất cả sản phẩm trong đơn đã hết hàng');
     }
   };
+
+  const drawerStatus = drawerOrder ? statusMap.get(drawerOrder.status) : undefined;
+  const drawerItems = drawerOrder?.items.map((item) => ({
+    name: item.name,
+    quantity: item.quantity,
+    priceLabel: formatPrice(item.price * item.quantity),
+    image: item.image,
+  }));
 
   return (
     <div className="bg-slate-50 rounded-2xl p-4 space-y-4">
@@ -479,26 +489,9 @@ export function AccountOrdersPreview({
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Mã đơn</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Ngày</th>
-                    {showOrderItems && (
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Số SP</th>
-                    )}
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Số SP</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Tổng</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Trạng thái</th>
-                    {showPaymentMethod && (
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Thanh toán</th>
-                    )}
-                    {showShippingMethod && (
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Giao hàng</th>
-                    )}
-                    {showTracking && (
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Tracking</th>
-                    )}
-                    {showShippingAddress && (
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Địa chỉ</th>
-                    )}
-                    {showTimeline && (
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Bước</th>
-                    )}
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide">Thao tác</th>
                   </tr>
                 </thead>
@@ -507,24 +500,15 @@ export function AccountOrdersPreview({
                     <tr key={order.id} className="border-t hover:bg-slate-50/50 transition-colors">
                       <td className="px-4 py-3 font-medium text-slate-900">{order.id}</td>
                       <td className="px-4 py-3 text-slate-500">{order.date}</td>
-                      {showOrderItems && <td className="px-4 py-3 text-slate-700">{order.itemsCount}</td>}
+                      <td className="px-4 py-3 text-slate-700">{order.itemsCount}</td>
                       <td className="px-4 py-3 font-semibold text-slate-900">{formatPrice(order.total)}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={order.status} statusConfig={statusMap.get(order.status)} brandColor={brandColor} />
                       </td>
-                      {showPaymentMethod && <td className="px-4 py-3 text-slate-500">{order.paymentMethod}</td>}
-                      {showShippingMethod && <td className="px-4 py-3 text-slate-500">{order.shippingMethod}</td>}
-                      {showTracking && <td className="px-4 py-3 text-slate-500">{order.trackingCode}</td>}
-                      {showShippingAddress && <td className="px-4 py-3 text-slate-500">{order.shippingAddress}</td>}
-                      {showTimeline && (
-                        <td className="px-4 py-3 text-slate-500">
-                          {TIMELINE_STEPS[(statusMap.get(order.status)?.step ?? 1) - 1]}
-                        </td>
-                      )}
                       <td className="px-4 py-3 text-right">
                         <button
                           type="button"
-                          onClick={() => {}}
+                          onClick={() => setDrawerOrder(order)}
                           className="inline-flex items-center gap-1 text-xs font-semibold"
                           style={{ color: brandColor }}
                         >
@@ -574,26 +558,11 @@ export function AccountOrdersPreview({
                     </div>
                     <StatusBadge status={order.status} statusConfig={statusMap.get(order.status)} brandColor={brandColor} />
                   </div>
-                  {showOrderItems && (
-                    <div className="mt-2 text-xs text-slate-500">{order.itemsCount} sản phẩm</div>
-                  )}
-                  {(showPaymentMethod || showShippingMethod || showTracking || showShippingAddress) && (
-                    <div className="mt-2 space-y-1 text-xs text-slate-500">
-                      {showPaymentMethod && <div>Thanh toán: {order.paymentMethod}</div>}
-                      {showShippingMethod && <div>Giao hàng: {order.shippingMethod}</div>}
-                      {showTracking && <div>Tracking: {order.trackingCode}</div>}
-                      {showShippingAddress && <div>Địa chỉ: {order.shippingAddress}</div>}
-                    </div>
-                  )}
-                  {showTimeline && (
-                    <div className="mt-2 text-xs text-slate-500">
-                      Bước: {TIMELINE_STEPS[(statusMap.get(order.status)?.step ?? 1) - 1]}
-                    </div>
-                  )}
+                  <div className="mt-2 text-xs text-slate-500">{order.itemsCount} sản phẩm</div>
                   <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
                     <button
                       type="button"
-                      onClick={() => {}}
+                      onClick={() => setDrawerOrder(order)}
                       className="font-semibold"
                       style={{ color: brandColor }}
                     >
@@ -729,6 +698,33 @@ export function AccountOrdersPreview({
           )}
         </div>
       )}
+
+      <OrderDetailDrawer
+        isOpen={Boolean(drawerOrder)}
+        onClose={() => setDrawerOrder(null)}
+        brandColor={brandColor}
+        title={drawerOrder?.id ?? ''}
+        subtitle={drawerOrder?.date}
+        statusLabel={drawerStatus?.label ?? drawerOrder?.status ?? ''}
+        statusColor={drawerStatus?.color}
+        totalLabel={drawerOrder ? formatPrice(drawerOrder.total) : ''}
+        items={drawerItems}
+        showItems={showOrderItems}
+        showTimeline={showTimeline}
+        timelineStep={drawerStatus?.step ?? 1}
+        timelineLabels={TIMELINE_STEPS}
+        showPaymentMethod={showPaymentMethod}
+        paymentMethod={drawerOrder?.paymentMethod ?? 'Đang cập nhật'}
+        showShippingMethod={showShippingMethod}
+        shippingMethod={drawerOrder?.shippingMethod ?? 'Đang cập nhật'}
+        showTracking={showTracking}
+        tracking={drawerOrder?.trackingCode ?? 'Đang cập nhật'}
+        showShippingAddress={showShippingAddress}
+        shippingAddress={drawerOrder?.shippingAddress ?? 'Đang cập nhật'}
+        allowCancel={drawerStatus?.allowCancel}
+        onCancel={drawerOrder ? () => {} : undefined}
+        onReorder={drawerOrder ? () => handleReorder(drawerOrder) : undefined}
+      />
     </div>
   );
 }

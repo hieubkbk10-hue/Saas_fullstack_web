@@ -12,6 +12,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { useBrandColor } from '@/components/site/hooks';
 import { StatusFilterDropdown } from '@/components/orders/StatusFilterDropdown';
+import { OrderDetailDrawer } from '@/components/orders/OrderDetailDrawer';
 import { useAccountOrdersConfig, useOrderStatuses } from '@/lib/experiences';
 import { notifyAddToCart, useCart } from '@/lib/cart';
 
@@ -168,6 +169,7 @@ export default function AccountOrdersPage() {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [drawerOrder, setDrawerOrder] = useState<NonNullable<typeof orders>[number] | null>(null);
   const ordersPerPage = config.ordersPerPage ?? 12;
   const statusKeys = useMemo(() => orderStatuses.map((status) => status.key), [orderStatuses]);
   const statusMap = useMemo(() => new Map(orderStatuses.map((status) => [status.key, status])), [orderStatuses]);
@@ -273,6 +275,18 @@ export default function AccountOrdersPage() {
   const visibleOrders = config.paginationType === 'pagination'
     ? filteredOrders.slice(pageStart, pageEnd)
     : filteredOrders.slice(0, ordersPerPage);
+
+  const drawerStatus = drawerOrder ? statusMap.get(drawerOrder.status) : undefined;
+  const drawerPaymentMethod = drawerOrder?.paymentMethod
+    ? (PAYMENT_LABELS[drawerOrder.paymentMethod] ?? drawerOrder.paymentMethod)
+    : 'Đang cập nhật';
+  const drawerItems = drawerOrder?.items.map((item) => ({
+    name: item.productName,
+    quantity: item.quantity,
+    priceLabel: formatPrice(item.price * item.quantity),
+    image: item.productImage,
+    variantTitle: item.variantTitle,
+  }));
 
   const toggleStatus = (status: string) => {
     setCurrentPage(1);
@@ -534,26 +548,9 @@ export default function AccountOrdersPage() {
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Mã đơn</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Ngày</th>
-                      {config.showOrderItems && (
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Số SP</th>
-                      )}
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Số SP</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Tổng</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Trạng thái</th>
-                      {config.showPaymentMethod && (
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Thanh toán</th>
-                      )}
-                      {config.showShippingMethod && (
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Giao hàng</th>
-                      )}
-                      {config.showTracking && (
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Tracking</th>
-                      )}
-                      {config.showShippingAddress && (
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Địa chỉ</th>
-                      )}
-                      {config.showTimeline && (
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Bước</th>
-                      )}
                       <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide">Thao tác</th>
                     </tr>
                   </thead>
@@ -563,37 +560,21 @@ export default function AccountOrdersPage() {
                       const statusLabel = statusMap.get(order.status)?.label ?? order.status;
                       const statusStyle = getStatusStyle(order.status);
                       const quantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
-                      const step = statusMap.get(order.status)?.step ?? 1;
                       return (
                         <tr key={order._id} className="border-t hover:bg-slate-50/50 transition-colors">
                           <td className="px-4 py-3 font-medium text-slate-900">{order.orderNumber}</td>
                           <td className="px-4 py-3 text-slate-500">{createdAt.toLocaleDateString('vi-VN')}</td>
-                          {config.showOrderItems && <td className="px-4 py-3 text-slate-700">{quantity}</td>}
+                      <td className="px-4 py-3 text-slate-700">{quantity}</td>
                           <td className="px-4 py-3 font-semibold text-slate-900">{formatPrice(order.totalAmount)}</td>
                           <td className="px-4 py-3">
                             <span className="px-2.5 py-1 rounded-full text-xs font-semibold border" style={statusStyle}>
                               {statusLabel}
                             </span>
                           </td>
-                          {config.showPaymentMethod && (
-                            <td className="px-4 py-3 text-slate-500">{order.paymentMethod}</td>
-                          )}
-                          {config.showShippingMethod && (
-                            <td className="px-4 py-3 text-slate-500">{order.shippingMethodLabel}</td>
-                          )}
-                          {config.showTracking && (
-                            <td className="px-4 py-3 text-slate-500">{order.trackingNumber ?? 'Đang cập nhật'}</td>
-                          )}
-                          {config.showShippingAddress && (
-                            <td className="px-4 py-3 text-slate-500">{order.shippingAddress}</td>
-                          )}
-                          {config.showTimeline && (
-                            <td className="px-4 py-3 text-slate-500">{TIMELINE_STEPS[step - 1] ?? TIMELINE_STEPS[0]}</td>
-                          )}
                           <td className="px-4 py-3 text-right">
                             <button
                               type="button"
-                              onClick={() => handleViewDetail(order.orderNumber)}
+                          onClick={() => setDrawerOrder(order)}
                               className="inline-flex items-center gap-1 text-xs font-semibold"
                               style={{ color: brandColor }}
                             >
@@ -611,7 +592,6 @@ export default function AccountOrdersPage() {
                   const createdAt = new Date(order._creationTime);
                   const statusLabel = statusMap.get(order.status)?.label ?? order.status;
                   const statusStyle = getStatusStyle(order.status);
-                  const step = statusMap.get(order.status)?.step ?? 1;
                   return (
                     <div key={order._id} className="bg-white border border-slate-200 rounded-xl p-3">
                       <div className="flex items-center justify-between">
@@ -623,26 +603,13 @@ export default function AccountOrdersPage() {
                           {statusLabel}
                         </span>
                       </div>
-                      {config.showOrderItems && (
-                        <div className="mt-2 text-xs text-slate-500">
-                          {order.items.reduce((sum, item) => sum + item.quantity, 0)} sản phẩm
-                        </div>
-                      )}
-                      {(config.showPaymentMethod || config.showShippingMethod || config.showTracking || config.showShippingAddress) && (
-                        <div className="mt-2 space-y-1 text-xs text-slate-500">
-                          {config.showPaymentMethod && <div>Thanh toán: {order.paymentMethod}</div>}
-                          {config.showShippingMethod && <div>Giao hàng: {order.shippingMethodLabel}</div>}
-                          {config.showTracking && <div>Tracking: {order.trackingNumber ?? 'Đang cập nhật'}</div>}
-                          {config.showShippingAddress && <div>Địa chỉ: {order.shippingAddress}</div>}
-                        </div>
-                      )}
-                      {config.showTimeline && (
-                        <div className="mt-2 text-xs text-slate-500">Bước: {TIMELINE_STEPS[step - 1] ?? TIMELINE_STEPS[0]}</div>
-                      )}
+                    <div className="mt-2 text-xs text-slate-500">
+                      {order.items.reduce((sum, item) => sum + item.quantity, 0)} sản phẩm
+                    </div>
                       <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
                         <button
                           type="button"
-                          onClick={() => handleViewDetail(order.orderNumber)}
+                        onClick={() => setDrawerOrder(order)}
                           className="font-semibold"
                           style={{ color: brandColor }}
                         >
@@ -828,6 +795,33 @@ export default function AccountOrdersPage() {
               )}
             </div>
           )}
+
+          <OrderDetailDrawer
+            isOpen={Boolean(drawerOrder)}
+            onClose={() => setDrawerOrder(null)}
+            brandColor={brandColor}
+            title={drawerOrder?.orderNumber ?? ''}
+            subtitle={drawerOrder ? new Date(drawerOrder._creationTime).toLocaleDateString('vi-VN') : undefined}
+            statusLabel={drawerStatus?.label ?? drawerOrder?.status ?? ''}
+            statusColor={drawerStatus?.color}
+            totalLabel={drawerOrder ? formatPrice(drawerOrder.totalAmount) : ''}
+            items={drawerItems}
+            showItems={config.showOrderItems}
+            showTimeline={config.showTimeline}
+            timelineStep={drawerStatus?.step ?? 1}
+            timelineLabels={TIMELINE_STEPS}
+            showPaymentMethod={config.showPaymentMethod}
+            paymentMethod={drawerPaymentMethod}
+            showShippingMethod={config.showShippingMethod}
+            shippingMethod={drawerOrder?.shippingMethodLabel ?? 'Đang cập nhật'}
+            showTracking={config.showTracking}
+            tracking={drawerOrder?.trackingNumber ?? 'Đang cập nhật'}
+            showShippingAddress={config.showShippingAddress}
+            shippingAddress={drawerOrder?.shippingAddress ?? 'Đang cập nhật'}
+            allowCancel={drawerStatus?.allowCancel}
+            onCancel={drawerOrder ? () => { void handleCancelOrder(drawerOrder._id); setDrawerOrder(null); } : undefined}
+            onReorder={drawerOrder ? () => { void handleReorder(drawerOrder); setDrawerOrder(null); } : undefined}
+          />
         </div>
       )}
     </div>
