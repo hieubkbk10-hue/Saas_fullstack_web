@@ -399,8 +399,8 @@ export function HeaderMenuPreview({
         )}
       </div>
 
-      {device === 'mobile' && config.search.show && searchOpen && (
-        <div className="px-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+      {config.search.show && searchOpen && (
+        <div className="md:hidden px-6 pb-4 border-b border-slate-100 dark:border-slate-800">
           <input
             type="text"
             placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
@@ -545,8 +545,8 @@ export function HeaderMenuPreview({
         </div>
       )}
 
-      {device === 'mobile' && config.search.show && searchOpen && (
-        <div className="px-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+      {config.search.show && searchOpen && (
+        <div className="md:hidden px-4 pb-4 border-b border-slate-200 dark:border-slate-700">
           <input
             type="text"
             placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
