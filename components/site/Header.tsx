@@ -525,7 +525,10 @@ export function Header() {
             )}
             <div className="flex items-center gap-1 lg:hidden">
               {showSearch && (
-                <button className="p-2 text-slate-600 dark:text-slate-400">
+                <button
+                  onClick={() => { setSearchOpen((prev) => !prev); }}
+                  className="p-2 text-slate-600 dark:text-slate-400"
+                >
                   <Search size={20} />
                 </button>
               )}
@@ -536,6 +539,21 @@ export function Header() {
             </div>
           </div>
         </div>
+
+        {showSearch && searchOpen && (
+          <div className="lg:hidden px-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <HeaderSearchAutocomplete
+              placeholder={config.search?.placeholder}
+              searchProducts={canSearchProducts}
+              searchPosts={canSearchPosts}
+              searchServices={canSearchServices}
+              brandColor={brandColor}
+              showButton={false}
+              className="w-full"
+              inputClassName="w-full px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+            />
+          </div>
+        )}
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
@@ -673,7 +691,10 @@ export function Header() {
               {/* Mobile: Search + Cart */}
               <div className="flex lg:hidden items-center gap-1">
                 {showSearch && (
-                  <button className="p-2 text-slate-600 dark:text-slate-400">
+                  <button
+                    onClick={() => { setSearchOpen((prev) => !prev); }}
+                    className="p-2 text-slate-600 dark:text-slate-400"
+                  >
                     <Search size={20} />
                   </button>
                 )}
@@ -707,6 +728,21 @@ export function Header() {
             </div>
           </div>
         </div>
+
+        {showSearch && searchOpen && (
+          <div className="lg:hidden px-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+            <HeaderSearchAutocomplete
+              placeholder={config.search?.placeholder}
+              searchProducts={canSearchProducts}
+              searchPosts={canSearchPosts}
+              searchServices={canSearchServices}
+              brandColor={brandColor}
+              showButton={false}
+              className="w-full"
+              inputClassName="w-full px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+            />
+          </div>
+        )}
 
         {/* Navigation Bar */}
         <div className="hidden lg:block px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
