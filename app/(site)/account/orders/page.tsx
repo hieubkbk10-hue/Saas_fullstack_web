@@ -223,10 +223,6 @@ export default function AccountOrdersPage() {
     }
   };
 
-  const handleViewDetail = (orderNumber: string) => {
-    toast.info(`Đang mở chi tiết đơn ${orderNumber}.`);
-  };
-
   const handleReorder = async (order: (typeof ordersList)[number]) => {
     const availableItems: Array<(typeof order.items)[number]> = [];
     const outOfStockItems: Array<(typeof order.items)[number]> = [];
@@ -708,7 +704,7 @@ export default function AccountOrdersPage() {
                         <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
                           <span className="text-slate-500 font-medium">Tracking:</span>
                           <span
-                            className="font-mono font-semibold px-2 py-0.5 rounded border text-xs"
+                            className="px-2 py-0.5 rounded border text-xs font-normal"
                             style={{ borderColor: getBrandTint(brandColor, 0.2), color: brandColor, backgroundColor: getBrandTint(brandColor, 0.08) }}
                           >
                             {trackingLabel}
@@ -734,11 +730,11 @@ export default function AccountOrdersPage() {
                         ) : (
                           <button
                             type="button"
-                            onClick={() => handleViewDetail(order.orderNumber)}
+                            onClick={() => { void handleReorder(order); }}
                             className="px-4 py-2 rounded-lg text-sm font-semibold border"
                             style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
                           >
-                            Xem chi tiết
+                            Mua lại
                           </button>
                         )}
                       </div>
