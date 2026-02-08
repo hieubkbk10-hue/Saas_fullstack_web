@@ -383,7 +383,11 @@ export function HeaderMenuPreview({
           </>
         ) : (
           <div className="flex items-center gap-2">
-            {config.search.show && (<button className="p-2 text-slate-600 dark:text-slate-400"><Search size={20} /></button>)}
+            {config.search.show && (
+              <button onClick={() => setSearchOpen((prev) => !prev)} className="p-2 text-slate-600 dark:text-slate-400">
+                <Search size={20} />
+              </button>
+            )}
             {config.cart.show && (
               <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative">
                 <ShoppingCart size={20} />
@@ -394,6 +398,16 @@ export function HeaderMenuPreview({
           </div>
         )}
       </div>
+
+      {device === 'mobile' && config.search.show && searchOpen && (
+        <div className="px-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <input
+            type="text"
+            placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
+            className="w-full px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+          />
+        </div>
+      )}
 
       {device === 'mobile' && mobileMenuOpen && (
         <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
@@ -472,7 +486,11 @@ export function HeaderMenuPreview({
           <div className="flex items-center gap-2">
             {device === 'mobile' ? (
               <>
-                {config.search.show && (<button className="p-2 text-slate-600 dark:text-slate-400"><Search size={20} /></button>)}
+                {config.search.show && (
+                  <button onClick={() => setSearchOpen((prev) => !prev)} className="p-2 text-slate-600 dark:text-slate-400">
+                    <Search size={20} />
+                  </button>
+                )}
                 {config.cart.show && (
                   <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative">
                     <ShoppingCart size={20} />
@@ -524,6 +542,16 @@ export function HeaderMenuPreview({
               </div>
             ))}
           </nav>
+        </div>
+      )}
+
+      {device === 'mobile' && config.search.show && searchOpen && (
+        <div className="px-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+          <input
+            type="text"
+            placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
+            className="w-full px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+          />
         </div>
       )}
 
