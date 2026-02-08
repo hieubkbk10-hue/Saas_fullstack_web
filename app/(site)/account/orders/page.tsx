@@ -253,10 +253,6 @@ export default function AccountOrdersPage() {
     }
   };
 
-  const handlePagination = (direction: 'prev' | 'next') => {
-    toast.info(direction === 'prev' ? 'Đang về trang trước.' : 'Đang sang trang tiếp theo.');
-  };
-
   const activeStatuses = selectedStatuses.length > 0
     ? selectedStatuses
     : (normalizedDefaultStatuses.length > 0 ? normalizedDefaultStatuses : statusKeys);
@@ -272,6 +268,8 @@ export default function AccountOrdersPage() {
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const pageStart = (safeCurrentPage - 1) * ordersPerPage;
   const pageEnd = pageStart + ordersPerPage;
+  const displayStart = filteredOrders.length === 0 ? 0 : pageStart + 1;
+  const displayEnd = Math.min(pageEnd, filteredOrders.length);
   const visibleOrders = config.paginationType === 'pagination'
     ? filteredOrders.slice(pageStart, pageEnd)
     : filteredOrders.slice(0, ordersPerPage);
@@ -338,7 +336,7 @@ export default function AccountOrdersPage() {
         <p className="text-slate-500 mt-2">Bạn đang có {totalOrders} đơn hàng gần đây.</p>
       </div>
 
-      {config.layoutStyle === 'cards' && ordersList.length > 0 && (
+      {ordersList.length > 0 && (
         <div className="mb-4">
           <StatusFilterDropdown
             options={orderStatuses.map((status) => ({ key: status.key, label: status.label }))}
@@ -351,7 +349,7 @@ export default function AccountOrdersPage() {
         </div>
       )}
 
-      {config.showStats && config.layoutStyle === 'cards' && ordersList.length > 0 && (
+      {config.showStats && ordersList.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard
             label="Tổng chi tiêu"
@@ -525,44 +523,6 @@ export default function AccountOrdersPage() {
                   Không có đơn hàng phù hợp.
                 </div>
               )}
-              {filteredOrders.length > 0 && (
-                <div className="pt-2">
-                  {config.paginationType === 'pagination' ? (
-                    <div className="flex items-center justify-between gap-3 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage((prev) => Math.max(1, Math.min(totalPages, prev - 1)))}
-                        disabled={safeCurrentPage === 1}
-                        className="px-3 py-1.5 rounded-lg font-semibold border disabled:opacity-50"
-                        style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
-                      >
-                        Trước
-                      </button>
-                      <div className="text-slate-500">
-                        Trang <span className="font-semibold text-slate-700">{safeCurrentPage}</span> / {totalPages}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, Math.max(1, prev + 1)))}
-                        disabled={safeCurrentPage === totalPages}
-                        className="px-3 py-1.5 rounded-lg font-semibold border disabled:opacity-50"
-                        style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
-                      >
-                        Sau
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-center mt-2 space-y-2">
-                      <div className="flex justify-center gap-1">
-                        <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
-                        <div className="w-2 h-2 rounded-full animate-pulse delay-100" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
-                        <div className="w-2 h-2 rounded-full animate-pulse delay-200" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
-                      </div>
-                      <p className="text-xs text-slate-400">Cuộn để xem thêm...</p>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
@@ -574,29 +534,62 @@ export default function AccountOrdersPage() {
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Mã đơn</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Ngày</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Số SP</th>
+                      {config.showOrderItems && (
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Số SP</th>
+                      )}
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Tổng</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Trạng thái</th>
+                      {config.showPaymentMethod && (
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Thanh toán</th>
+                      )}
+                      {config.showShippingMethod && (
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Giao hàng</th>
+                      )}
+                      {config.showTracking && (
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Tracking</th>
+                      )}
+                      {config.showShippingAddress && (
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Địa chỉ</th>
+                      )}
+                      {config.showTimeline && (
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Bước</th>
+                      )}
                       <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {ordersList.map((order) => {
+                    {visibleOrders.map((order) => {
                       const createdAt = new Date(order._creationTime);
                       const statusLabel = statusMap.get(order.status)?.label ?? order.status;
                       const statusStyle = getStatusStyle(order.status);
                       const quantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+                      const step = statusMap.get(order.status)?.step ?? 1;
                       return (
                         <tr key={order._id} className="border-t hover:bg-slate-50/50 transition-colors">
                           <td className="px-4 py-3 font-medium text-slate-900">{order.orderNumber}</td>
                           <td className="px-4 py-3 text-slate-500">{createdAt.toLocaleDateString('vi-VN')}</td>
-                          <td className="px-4 py-3 text-slate-700">{quantity}</td>
+                          {config.showOrderItems && <td className="px-4 py-3 text-slate-700">{quantity}</td>}
                           <td className="px-4 py-3 font-semibold text-slate-900">{formatPrice(order.totalAmount)}</td>
                           <td className="px-4 py-3">
                             <span className="px-2.5 py-1 rounded-full text-xs font-semibold border" style={statusStyle}>
                               {statusLabel}
                             </span>
                           </td>
+                          {config.showPaymentMethod && (
+                            <td className="px-4 py-3 text-slate-500">{order.paymentMethod}</td>
+                          )}
+                          {config.showShippingMethod && (
+                            <td className="px-4 py-3 text-slate-500">{order.shippingMethodLabel}</td>
+                          )}
+                          {config.showTracking && (
+                            <td className="px-4 py-3 text-slate-500">{order.trackingNumber ?? 'Đang cập nhật'}</td>
+                          )}
+                          {config.showShippingAddress && (
+                            <td className="px-4 py-3 text-slate-500">{order.shippingAddress}</td>
+                          )}
+                          {config.showTimeline && (
+                            <td className="px-4 py-3 text-slate-500">{TIMELINE_STEPS[step - 1] ?? TIMELINE_STEPS[0]}</td>
+                          )}
                           <td className="px-4 py-3 text-right">
                             <button
                               type="button"
@@ -612,37 +605,13 @@ export default function AccountOrdersPage() {
                     })}
                   </tbody>
                 </table>
-                <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3">
-                  <p className="text-sm text-slate-600">
-                    Hiển thị <span className="font-medium text-slate-900">1</span> đến{' '}
-                    <span className="font-medium text-slate-900">{ordersList.length}</span> trong số{' '}
-                    <span className="font-medium text-slate-900">{ordersList.length}</span> kết quả
-                  </p>
-                  <div className="inline-flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handlePagination('prev')}
-                      className="px-3 py-1.5 text-xs font-semibold border rounded-md"
-                      style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
-                    >
-                      Trước
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePagination('next')}
-                      className="px-3 py-1.5 text-xs font-semibold text-white rounded-md"
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      Sau
-                    </button>
-                  </div>
-                </div>
               </div>
               <div className="space-y-2 md:hidden">
-                {ordersList.map((order) => {
+                {visibleOrders.map((order) => {
                   const createdAt = new Date(order._creationTime);
                   const statusLabel = statusMap.get(order.status)?.label ?? order.status;
                   const statusStyle = getStatusStyle(order.status);
+                  const step = statusMap.get(order.status)?.step ?? 1;
                   return (
                     <div key={order._id} className="bg-white border border-slate-200 rounded-xl p-3">
                       <div className="flex items-center justify-between">
@@ -654,8 +623,23 @@ export default function AccountOrdersPage() {
                           {statusLabel}
                         </span>
                       </div>
+                      {config.showOrderItems && (
+                        <div className="mt-2 text-xs text-slate-500">
+                          {order.items.reduce((sum, item) => sum + item.quantity, 0)} sản phẩm
+                        </div>
+                      )}
+                      {(config.showPaymentMethod || config.showShippingMethod || config.showTracking || config.showShippingAddress) && (
+                        <div className="mt-2 space-y-1 text-xs text-slate-500">
+                          {config.showPaymentMethod && <div>Thanh toán: {order.paymentMethod}</div>}
+                          {config.showShippingMethod && <div>Giao hàng: {order.shippingMethodLabel}</div>}
+                          {config.showTracking && <div>Tracking: {order.trackingNumber ?? 'Đang cập nhật'}</div>}
+                          {config.showShippingAddress && <div>Địa chỉ: {order.shippingAddress}</div>}
+                        </div>
+                      )}
+                      {config.showTimeline && (
+                        <div className="mt-2 text-xs text-slate-500">Bước: {TIMELINE_STEPS[step - 1] ?? TIMELINE_STEPS[0]}</div>
+                      )}
                       <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-                        <span>{order.items.reduce((sum, item) => sum + item.quantity, 0)} sản phẩm</span>
                         <button
                           type="button"
                           onClick={() => handleViewDetail(order.orderNumber)}
@@ -674,7 +658,7 @@ export default function AccountOrdersPage() {
 
           {config.layoutStyle === 'timeline' && (
             <div className="space-y-6">
-              {ordersList.map((order) => {
+              {visibleOrders.map((order) => {
                 const createdAt = new Date(order._creationTime);
                 const statusLabel = statusMap.get(order.status)?.label ?? order.status;
                 const statusStyle = getStatusStyle(order.status);
@@ -701,6 +685,19 @@ export default function AccountOrdersPage() {
 
                     <div className="p-6 space-y-6">
                       {config.showTimeline && <Stepper step={step} brandColor={brandColor} />}
+                      {(config.showPaymentMethod || config.showShippingMethod || config.showShippingAddress) && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {config.showPaymentMethod && (
+                            <OrderMeta label="Thanh toán" value={order.paymentMethod ?? 'Đang cập nhật'} />
+                          )}
+                          {config.showShippingMethod && (
+                            <OrderMeta label="Giao hàng" value={order.shippingMethodLabel ?? 'Đang cập nhật'} />
+                          )}
+                          {config.showShippingAddress && (
+                            <OrderMeta label="Địa chỉ" value={order.shippingAddress ?? 'Đang cập nhật'} />
+                          )}
+                        </div>
+                      )}
                       {config.showOrderItems && (
                         <div className="space-y-4">
                           {order.items.map((item, itemIndex) => (
@@ -778,6 +775,57 @@ export default function AccountOrdersPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {config.layoutStyle !== 'cards' && visibleOrders.length === 0 && (
+            <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-6 text-center text-sm text-slate-500">
+              Không có đơn hàng phù hợp.
+            </div>
+          )}
+
+          {filteredOrders.length > 0 && (
+            <div className="pt-2">
+              {config.paginationType === 'pagination' ? (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                  <p className="text-slate-500">
+                    Hiển thị <span className="font-semibold text-slate-700">{displayStart}</span> đến{' '}
+                    <span className="font-semibold text-slate-700">{displayEnd}</span> / {filteredOrders.length}
+                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={safeCurrentPage === 1}
+                      className="px-3 py-1.5 rounded-lg font-semibold border disabled:opacity-50"
+                      style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
+                    >
+                      Trước
+                    </button>
+                    <div className="text-slate-500">
+                      Trang <span className="font-semibold text-slate-700">{safeCurrentPage}</span> / {totalPages}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      disabled={safeCurrentPage === totalPages}
+                      className="px-3 py-1.5 rounded-lg font-semibold border disabled:opacity-50"
+                      style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
+                    >
+                      Sau
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center mt-2 space-y-2">
+                  <div className="flex justify-center gap-1">
+                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                    <div className="w-2 h-2 rounded-full animate-pulse delay-100" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
+                    <div className="w-2 h-2 rounded-full animate-pulse delay-200" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
+                  </div>
+                  <p className="text-xs text-slate-400">Cuộn để xem thêm...</p>
+                </div>
+              )}
             </div>
           )}
         </div>
