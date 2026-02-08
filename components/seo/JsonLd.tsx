@@ -35,6 +35,44 @@ export const generateOrganizationSchema = (params: {
     }),
 })
 
+export const generateLocalBusinessSchema = (params: {
+  name: string;
+  url: string;
+  type?: string;
+  logo?: string;
+  description?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  openingHours?: string;
+  priceRange?: string;
+  geo?: { lat: string; lng: string };
+}): Record<string, unknown> => ({
+  '@context': 'https://schema.org',
+  '@type': params.type ?? 'LocalBusiness',
+  name: params.name,
+  url: params.url,
+  ...(params.logo && { image: params.logo }),
+  ...(params.description && { description: params.description }),
+  ...(params.email && { email: params.email }),
+  ...(params.phone && { telephone: params.phone }),
+  ...(params.priceRange && { priceRange: params.priceRange }),
+  ...(params.openingHours && { openingHours: params.openingHours }),
+  ...(params.geo?.lat && params.geo?.lng && {
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: params.geo.lat,
+      longitude: params.geo.lng,
+    },
+  }),
+  ...(params.address && {
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: params.address,
+    },
+  }),
+})
+
 export const generateArticleSchema = (params: {
   title: string;
   description?: string;
@@ -74,6 +112,7 @@ export const generateProductSchema = (params: {
   sku: string;
   inStock: boolean;
   brand?: string;
+  aggregateRating?: { ratingValue: number; reviewCount: number };
 }): Record<string, unknown> => ({
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -97,6 +136,13 @@ export const generateProductSchema = (params: {
       priceCurrency: params.currency ?? 'VND',
       url: params.url,
     },
+    ...(params.aggregateRating && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: params.aggregateRating.ratingValue,
+        reviewCount: params.aggregateRating.reviewCount,
+      },
+    }),
 })
 
 export const generateServiceSchema = (params: {
@@ -108,6 +154,7 @@ export const generateServiceSchema = (params: {
   currency?: string;
   providerName: string;
   providerUrl?: string;
+  aggregateRating?: { ratingValue: number; reviewCount: number };
 }): Record<string, unknown> => ({
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -125,6 +172,13 @@ export const generateServiceSchema = (params: {
         '@type': 'Offer',
         price: params.price,
         priceCurrency: params.currency ?? 'VND',
+      },
+    }),
+    ...(params.aggregateRating && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: params.aggregateRating.ratingValue,
+        reviewCount: params.aggregateRating.reviewCount,
       },
     }),
 })
@@ -158,4 +212,37 @@ export const generateWebsiteSchema = (params: {
         urlTemplate: `${params.url}/search?q={search_term_string}`,
       },
     },
+})
+
+export const generateNavigationSchema = (params: {
+  name: string;
+  url: string;
+  items: { name: string; url: string }[];
+}): Record<string, unknown> => ({
+  '@context': 'https://schema.org',
+  '@type': 'SiteNavigationElement',
+  name: params.name,
+  url: params.url,
+  hasPart: params.items.map((item) => ({
+    '@type': 'SiteNavigationElement',
+    name: item.name,
+    url: item.url,
+  })),
+})
+
+export const generateItemListSchema = (params: {
+  name: string;
+  url: string;
+  items: { name: string; url: string }[];
+}): Record<string, unknown> => ({
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: params.name,
+  url: params.url,
+  itemListElement: params.items.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    url: item.url,
+  })),
 })

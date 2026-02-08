@@ -3,6 +3,7 @@ import { getConvexClient } from '@/lib/convex';
 import { api } from '@/convex/_generated/api';
 import { getSEOSettings, getSiteSettings } from '@/lib/get-settings';
 import { JsonLd, generateBreadcrumbSchema, generateServiceSchema } from '@/components/seo/JsonLd';
+import { parseHreflang } from '@/lib/seo';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -31,10 +32,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = (service.metaDescription ?? service.excerpt) ?? seo.seo_description;
   const image = service.thumbnail ?? seo.seo_og_image;
   const keywords = seo.seo_keywords ? seo.seo_keywords.split(',').map(k => k.trim()) : [];
+  const languages = parseHreflang(seo.seo_hreflang);
 
   return {
     alternates: {
       canonical: `${baseUrl}/services/${service.slug}`,
+      ...(Object.keys(languages).length > 0 && { languages }),
     },
     description,
     keywords,
@@ -73,7 +76,15 @@ export default async function ServiceLayout({ params, children }: Props) {
   const serviceUrl = `${baseUrl}/services/${service.slug}`;
   const image = service.thumbnail ?? seo.seo_og_image;
 
+  const ratingSummary = await client.query(api.comments.getRatingSummary, {
+    targetId: service._id,
+    targetType: 'service',
+  });
+
   const serviceSchema = generateServiceSchema({
+    aggregateRating: ratingSummary.count > 0
+      ? { ratingValue: Number(ratingSummary.average.toFixed(2)), reviewCount: ratingSummary.count }
+      : undefined,
     description: (service.metaDescription ?? service.excerpt) ?? seo.seo_description,
     image,
     name: service.metaTitle ?? service.title,

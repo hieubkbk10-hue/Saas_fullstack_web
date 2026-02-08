@@ -1,9 +1,18 @@
-import { JsonLd, generateOrganizationSchema, generateWebsiteSchema } from '@/components/seo/JsonLd';
+import {
+  JsonLd,
+  generateLocalBusinessSchema,
+  generateNavigationSchema,
+  generateOrganizationSchema,
+  generateWebsiteSchema,
+} from '@/components/seo/JsonLd';
 import { DynamicFooter } from '@/components/site/DynamicFooter';
 import { Header } from '@/components/site/Header';
 import { CartDrawer } from '@/components/site/CartDrawer';
 import { SiteProviders } from '@/components/site/SiteProviders';
+import { api } from '@/convex/_generated/api';
+import { getConvexClient } from '@/lib/convex';
 import { getContactSettings, getSEOSettings, getSiteSettings } from '@/lib/get-settings';
+import { parseHreflang } from '@/lib/seo';
 import type { Metadata } from 'next';
 
 const buildKeywords = (seoKeywords: string): string[] => {
@@ -48,6 +57,16 @@ const resolveCanonical = (baseUrl: string): string | undefined => {
   return baseUrl;
 };
 
+const resolveUrl = (url: string, baseUrl: string): string => {
+  if (!url) {
+    return baseUrl;
+  }
+  if (url.startsWith('http')) {
+    return url;
+  }
+  return `${baseUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+};
+
 export const generateMetadata = (): Promise<Metadata> => {
   return Promise.all([
     getSiteSettings(),
@@ -56,10 +75,12 @@ export const generateMetadata = (): Promise<Metadata> => {
     const baseUrl = (site.site_url || process.env.NEXT_PUBLIC_SITE_URL) ?? '';
     const title = seo.seo_title || site.site_name || 'VietAdmin';
     const description = seo.seo_description || site.site_tagline || '';
+    const languages = parseHreflang(seo.seo_hreflang);
 
     return {
       alternates: {
         canonical: resolveCanonical(baseUrl),
+        ...(Object.keys(languages).length > 0 && { languages }),
       },
       description,
       icons: { icon: '/api/favicon' },
@@ -100,8 +121,13 @@ const SiteLayout = ({
     getSiteSettings(),
     getSEOSettings(),
     getContactSettings(),
-  ]).then(([site, seo, contact]) => {
+  ]).then(async ([site, seo, contact]) => {
     const baseUrl = (site.site_url || process.env.NEXT_PUBLIC_SITE_URL) ?? '';
+    const client = getConvexClient();
+    const headerMenu = await client.query(api.menus.getMenuByLocation, { location: 'header' });
+    const headerItems = headerMenu
+      ? await client.query(api.menus.listActiveMenuItems, { menuId: headerMenu._id })
+      : [];
 
     const organizationSchema = generateOrganizationSchema({
       address: contact.contact_address,
@@ -110,6 +136,32 @@ const SiteLayout = ({
       logo: site.site_logo,
       name: site.site_name,
       phone: contact.contact_phone,
+      url: baseUrl,
+    });
+
+    const localBusinessSchema = generateLocalBusinessSchema({
+      address: contact.contact_address,
+      description: seo.seo_description,
+      email: contact.contact_email,
+      geo: {
+        lat: seo.seo_geo_lat,
+        lng: seo.seo_geo_lng,
+      },
+      logo: site.site_logo,
+      name: site.site_name,
+      openingHours: seo.seo_opening_hours,
+      phone: contact.contact_phone,
+      priceRange: seo.seo_price_range,
+      type: seo.seo_business_type,
+      url: baseUrl,
+    });
+
+    const navigationSchema = generateNavigationSchema({
+      items: headerItems.map((item) => ({
+        name: item.label,
+        url: resolveUrl(item.url, baseUrl),
+      })),
+      name: `${site.site_name} Navigation`,
       url: baseUrl,
     });
 
@@ -123,7 +175,9 @@ const SiteLayout = ({
       <SiteProviders>
         <div className="min-h-screen flex flex-col">
           <JsonLd data={organizationSchema} />
+          <JsonLd data={localBusinessSchema} />
           <JsonLd data={websiteSchema} />
+          {headerItems.length > 0 && <JsonLd data={navigationSchema} />}
           <Header />
           <CartDrawer />
           <main className="flex-1 overflow-x-hidden">

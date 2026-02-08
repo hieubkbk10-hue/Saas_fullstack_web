@@ -267,6 +267,8 @@ export const seedPostsModule = mutation({
         { enabled: true, fieldKey: "tags", isSystem: false, linkedFeature: "enableTags", moduleKey: "posts", name: "Tags", order: 8, required: false, type: "tags" as const },
         { enabled: true, fieldKey: "featured", isSystem: false, linkedFeature: "enableFeatured", moduleKey: "posts", name: "Nổi bật", order: 9, required: false, type: "boolean" as const },
         { enabled: true, fieldKey: "publish_date", isSystem: false, linkedFeature: "enableScheduling", moduleKey: "posts", name: "Ngày xuất bản", order: 10, required: false, type: "date" as const },
+        { enabled: true, fieldKey: "metaTitle", group: "seo", isSystem: false, moduleKey: "posts", name: "Meta Title", order: 11, required: false, type: "text" as const },
+        { enabled: true, fieldKey: "metaDescription", group: "seo", isSystem: false, moduleKey: "posts", name: "Meta Description", order: 12, required: false, type: "textarea" as const },
       ];
       for (const field of fields) {
         await ctx.db.insert("moduleFields", field);
@@ -286,19 +288,27 @@ export const seedPostsModule = mutation({
     }
 
     if (existingFields.length > 0) {
-      const hasAuthorName = existingFields.some((field) => field.fieldKey === "author_name");
-      if (!hasAuthorName) {
-        const maxOrder = Math.max(...existingFields.map((field) => field.order)) + 1;
+      const fieldsToEnsure = [
+        { fieldKey: "author_name", name: "Tác giả", type: "text" as const },
+        { fieldKey: "metaTitle", name: "Meta Title", type: "text" as const, group: "seo" },
+        { fieldKey: "metaDescription", name: "Meta Description", type: "textarea" as const, group: "seo" },
+      ];
+      const existingKeys = new Set(existingFields.map((field) => field.fieldKey));
+      let nextOrder = Math.max(...existingFields.map((field) => field.order)) + 1;
+      for (const field of fieldsToEnsure) {
+        if (existingKeys.has(field.fieldKey)) {continue;}
         await ctx.db.insert("moduleFields", {
           enabled: true,
-          fieldKey: "author_name",
+          fieldKey: field.fieldKey,
+          group: field.group,
           isSystem: false,
           moduleKey: "posts",
-          name: "Tác giả",
-          order: maxOrder,
+          name: field.name,
+          order: nextOrder,
           required: false,
-          type: "text",
+          type: field.type,
         });
+        nextOrder += 1;
       }
     }
 
@@ -611,6 +621,8 @@ export const seedProductsModule = mutation({
         { enabled: true, fieldKey: "description", isSystem: false, moduleKey: "products", name: "Mô tả", order: 8, required: false, type: "richtext" as const },
         { enabled: true, fieldKey: "image", isSystem: false, moduleKey: "products", name: "Ảnh đại diện", order: 9, required: false, type: "image" as const },
         { enabled: true, fieldKey: "images", isSystem: false, linkedFeature: "enableGallery", moduleKey: "products", name: "Thư viện ảnh", order: 10, required: false, type: "gallery" as const },
+        { enabled: true, fieldKey: "metaTitle", group: "seo", isSystem: false, moduleKey: "products", name: "Meta Title", order: 11, required: false, type: "text" as const },
+        { enabled: true, fieldKey: "metaDescription", group: "seo", isSystem: false, moduleKey: "products", name: "Meta Description", order: 12, required: false, type: "textarea" as const },
       ];
       for (const field of productFields) {
         await ctx.db.insert("moduleFields", field);
@@ -627,6 +639,31 @@ export const seedProductsModule = mutation({
       ];
       for (const field of categoryFields) {
         await ctx.db.insert("moduleFields", field);
+      }
+    }
+
+    if (existingFields) {
+      const allFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "products")).collect();
+      const existingKeys = new Set(allFields.map((field) => field.fieldKey));
+      let nextOrder = Math.max(...allFields.map((field) => field.order)) + 1;
+      const seoFields = [
+        { fieldKey: "metaTitle", name: "Meta Title", type: "text" as const },
+        { fieldKey: "metaDescription", name: "Meta Description", type: "textarea" as const },
+      ];
+      for (const field of seoFields) {
+        if (existingKeys.has(field.fieldKey)) {continue;}
+        await ctx.db.insert("moduleFields", {
+          enabled: true,
+          fieldKey: field.fieldKey,
+          group: "seo",
+          isSystem: false,
+          moduleKey: "products",
+          name: field.name,
+          order: nextOrder,
+          required: false,
+          type: field.type,
+        });
+        nextOrder += 1;
       }
     }
 
@@ -1974,6 +2011,12 @@ export const seedSettingsModule = mutation({
         { group: "seo", key: "seo_description", value: "VietAdmin là hệ thống quản trị website hiện đại, dễ sử dụng" },
         { group: "seo", key: "seo_keywords", value: "admin, quản trị, website, cms" },
         { group: "seo", key: "seo_og_image", value: "" },
+        { group: "seo", key: "seo_business_type", value: "LocalBusiness" },
+        { group: "seo", key: "seo_opening_hours", value: "Mo-Su 08:00-22:00" },
+        { group: "seo", key: "seo_price_range", value: "$$" },
+        { group: "seo", key: "seo_geo_lat", value: "" },
+        { group: "seo", key: "seo_geo_lng", value: "" },
+        { group: "seo", key: "seo_hreflang", value: "" },
         
         // Social settings
         { group: "social", key: "social_facebook", value: "" },
@@ -2099,6 +2142,12 @@ export const seedSettingsModule = mutation({
         { enabled: true, fieldKey: "seo_keywords", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "Keywords", order: 12, required: false, type: "tags" as const },
         { enabled: true, fieldKey: "seo_og_image", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "OG Image", order: 13, required: false, type: "image" as const },
         { enabled: true, fieldKey: "seo_robots", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "Robots.txt", order: 14, required: false, type: "textarea" as const },
+        { enabled: true, fieldKey: "seo_business_type", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "Loại hình doanh nghiệp", order: 15, required: false, type: "select" as const },
+        { enabled: true, fieldKey: "seo_opening_hours", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "Giờ mở cửa", order: 16, required: false, type: "text" as const },
+        { enabled: true, fieldKey: "seo_price_range", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "Khoảng giá", order: 17, required: false, type: "text" as const },
+        { enabled: true, fieldKey: "seo_geo_lat", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "Vĩ độ (Latitude)", order: 18, required: false, type: "number" as const },
+        { enabled: true, fieldKey: "seo_geo_lng", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "Kinh độ (Longitude)", order: 19, required: false, type: "number" as const },
+        { enabled: true, fieldKey: "seo_hreflang", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "Hreflang", order: 20, required: false, type: "textarea" as const },
         // Social fields
         { enabled: true, fieldKey: "social_facebook", group: "social", isSystem: false, linkedFeature: "enableSocial", moduleKey: "settings", name: "Facebook", order: 14, required: false, type: "text" as const },
         { enabled: true, fieldKey: "social_instagram", group: "social", isSystem: false, linkedFeature: "enableSocial", moduleKey: "settings", name: "Instagram", order: 15, required: false, type: "text" as const },
@@ -2238,8 +2287,8 @@ export const seedMenusModule = mutation({
     }
 
     // 6. Seed module fields
-    const existingFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "menus")).first();
-    if (!existingFields) {
+    const existingFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "menus")).collect();
+    if (existingFields.length === 0) {
       const fields = [
         { enabled: true, fieldKey: "label", isSystem: true, moduleKey: "menus", name: "Tiêu đề", order: 0, required: true, type: "text" as const },
         { enabled: true, fieldKey: "url", isSystem: true, moduleKey: "menus", name: "URL", order: 1, required: true, type: "text" as const },
@@ -2252,6 +2301,36 @@ export const seedMenusModule = mutation({
       ];
       for (const field of fields) {
         await ctx.db.insert("moduleFields", field);
+      }
+    }
+
+    if (existingFields.length > 0) {
+      const seoFields = [
+        { fieldKey: "seo_business_type", name: "Loại hình doanh nghiệp", type: "select" as const },
+        { fieldKey: "seo_opening_hours", name: "Giờ mở cửa", type: "text" as const },
+        { fieldKey: "seo_price_range", name: "Khoảng giá", type: "text" as const },
+        { fieldKey: "seo_geo_lat", name: "Vĩ độ (Latitude)", type: "number" as const },
+        { fieldKey: "seo_geo_lng", name: "Kinh độ (Longitude)", type: "number" as const },
+        { fieldKey: "seo_hreflang", name: "Hreflang", type: "textarea" as const },
+      ];
+      const existingKeys = new Set(existingFields.map((field) => field.fieldKey));
+      const maxOrder = existingFields.reduce((max, field) => Math.max(max, field.order), 0);
+      let order = maxOrder + 1;
+      for (const field of seoFields) {
+        if (existingKeys.has(field.fieldKey)) {continue;}
+        await ctx.db.insert("moduleFields", {
+          enabled: true,
+          fieldKey: field.fieldKey,
+          group: "seo",
+          isSystem: false,
+          linkedFeature: "enableSEO",
+          moduleKey: "settings",
+          name: field.name,
+          order,
+          required: false,
+          type: field.type,
+        });
+        order += 1;
       }
     }
 
@@ -2944,6 +3023,8 @@ export const seedServicesModule = mutation({
         { enabled: true, fieldKey: "price", isSystem: false, linkedFeature: "enablePrice", moduleKey: "services", name: "Giá dịch vụ", order: 8, required: false, type: "price" as const },
         { enabled: true, fieldKey: "duration", isSystem: false, linkedFeature: "enableDuration", moduleKey: "services", name: "Thời gian", order: 9, required: false, type: "text" as const },
         { enabled: true, fieldKey: "featured", isSystem: false, linkedFeature: "enableFeatured", moduleKey: "services", name: "Nổi bật", order: 10, required: false, type: "boolean" as const },
+        { enabled: true, fieldKey: "metaTitle", group: "seo", isSystem: false, moduleKey: "services", name: "Meta Title", order: 11, required: false, type: "text" as const },
+        { enabled: true, fieldKey: "metaDescription", group: "seo", isSystem: false, moduleKey: "services", name: "Meta Description", order: 12, required: false, type: "textarea" as const },
       ];
       for (const field of serviceFields) {
         await ctx.db.insert("moduleFields", field);
@@ -2960,6 +3041,31 @@ export const seedServicesModule = mutation({
       ];
       for (const field of categoryFields) {
         await ctx.db.insert("moduleFields", field);
+      }
+    }
+
+    if (existingFields) {
+      const allFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "services")).collect();
+      const existingKeys = new Set(allFields.map((field) => field.fieldKey));
+      let nextOrder = Math.max(...allFields.map((field) => field.order)) + 1;
+      const seoFields = [
+        { fieldKey: "metaTitle", name: "Meta Title", type: "text" as const },
+        { fieldKey: "metaDescription", name: "Meta Description", type: "textarea" as const },
+      ];
+      for (const field of seoFields) {
+        if (existingKeys.has(field.fieldKey)) {continue;}
+        await ctx.db.insert("moduleFields", {
+          enabled: true,
+          fieldKey: field.fieldKey,
+          group: "seo",
+          isSystem: false,
+          moduleKey: "services",
+          name: field.name,
+          order: nextOrder,
+          required: false,
+          type: field.type,
+        });
+        nextOrder += 1;
       }
     }
 

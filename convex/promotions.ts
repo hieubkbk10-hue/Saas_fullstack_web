@@ -127,8 +127,26 @@ export const listAdminWithOffset = query({
     const offset = args.offset ?? 0;
     const fetchLimit = Math.min(offset + limit + 50, 1000);
 
+    let discountTypeFiltered = false;
     let promotions: Doc<"promotions">[] = [];
-    if (args.status) {
+    if (args.status && args.promotionType) {
+      promotions = await ctx.db
+        .query("promotions")
+        .withIndex("by_status_promotionType", (q) =>
+          q.eq("status", args.status!).eq("promotionType", args.promotionType!)
+        )
+        .order("desc")
+        .take(fetchLimit);
+    } else if (args.status && args.discountType) {
+      promotions = await ctx.db
+        .query("promotions")
+        .withIndex("by_status_discountType", (q) =>
+          q.eq("status", args.status!).eq("discountType", args.discountType!)
+        )
+        .order("desc")
+        .take(fetchLimit);
+      discountTypeFiltered = true;
+    } else if (args.status) {
       promotions = await ctx.db
         .query("promotions")
         .withIndex("by_status", (q) => q.eq("status", args.status!))
@@ -150,13 +168,7 @@ export const listAdminWithOffset = query({
       promotions = await ctx.db.query("promotions").order("desc").take(fetchLimit);
     }
 
-    if (args.discountType && !args.promotionType && !args.status) {
-      promotions = promotions.filter((promo) => promo.discountType === args.discountType);
-    }
-    if (args.promotionType && args.status) {
-      promotions = promotions.filter((promo) => promo.promotionType === args.promotionType);
-    }
-    if (args.discountType && (args.status || args.promotionType)) {
+    if (args.discountType && !discountTypeFiltered) {
       promotions = promotions.filter((promo) => promo.discountType === args.discountType);
     }
 
@@ -184,8 +196,24 @@ export const countAdmin = query({
     const limit = 5000;
     const fetchLimit = limit + 1;
 
+    let discountTypeFiltered = false;
     let promotions: Doc<"promotions">[] = [];
-    if (args.status) {
+    if (args.status && args.promotionType) {
+      promotions = await ctx.db
+        .query("promotions")
+        .withIndex("by_status_promotionType", (q) =>
+          q.eq("status", args.status!).eq("promotionType", args.promotionType!)
+        )
+        .take(fetchLimit);
+    } else if (args.status && args.discountType) {
+      promotions = await ctx.db
+        .query("promotions")
+        .withIndex("by_status_discountType", (q) =>
+          q.eq("status", args.status!).eq("discountType", args.discountType!)
+        )
+        .take(fetchLimit);
+      discountTypeFiltered = true;
+    } else if (args.status) {
       promotions = await ctx.db
         .query("promotions")
         .withIndex("by_status", (q) => q.eq("status", args.status!))
@@ -204,13 +232,7 @@ export const countAdmin = query({
       promotions = await ctx.db.query("promotions").take(fetchLimit);
     }
 
-    if (args.discountType && !args.promotionType && !args.status) {
-      promotions = promotions.filter((promo) => promo.discountType === args.discountType);
-    }
-    if (args.promotionType && args.status) {
-      promotions = promotions.filter((promo) => promo.promotionType === args.promotionType);
-    }
-    if (args.discountType && (args.status || args.promotionType)) {
+    if (args.discountType && !discountTypeFiltered) {
       promotions = promotions.filter((promo) => promo.discountType === args.discountType);
     }
 
@@ -239,8 +261,24 @@ export const listAdminIds = query({
     const limit = Math.min(args.limit ?? 5000, 5000);
     const fetchLimit = limit + 1;
 
+    let discountTypeFiltered = false;
     let promotions: Doc<"promotions">[] = [];
-    if (args.status) {
+    if (args.status && args.promotionType) {
+      promotions = await ctx.db
+        .query("promotions")
+        .withIndex("by_status_promotionType", (q) =>
+          q.eq("status", args.status!).eq("promotionType", args.promotionType!)
+        )
+        .take(fetchLimit);
+    } else if (args.status && args.discountType) {
+      promotions = await ctx.db
+        .query("promotions")
+        .withIndex("by_status_discountType", (q) =>
+          q.eq("status", args.status!).eq("discountType", args.discountType!)
+        )
+        .take(fetchLimit);
+      discountTypeFiltered = true;
+    } else if (args.status) {
       promotions = await ctx.db
         .query("promotions")
         .withIndex("by_status", (q) => q.eq("status", args.status!))
@@ -259,13 +297,7 @@ export const listAdminIds = query({
       promotions = await ctx.db.query("promotions").take(fetchLimit);
     }
 
-    if (args.discountType && !args.promotionType && !args.status) {
-      promotions = promotions.filter((promo) => promo.discountType === args.discountType);
-    }
-    if (args.promotionType && args.status) {
-      promotions = promotions.filter((promo) => promo.promotionType === args.promotionType);
-    }
-    if (args.discountType && (args.status || args.promotionType)) {
+    if (args.discountType && !discountTypeFiltered) {
       promotions = promotions.filter((promo) => promo.discountType === args.discountType);
     }
 

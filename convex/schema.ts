@@ -573,7 +573,8 @@ export default defineSchema({
     .index("by_orderNumber", ["orderNumber"])
     .index("by_customer", ["customerId"])
     .index("by_status", ["status"])
-    .index("by_paymentStatus", ["paymentStatus"]),
+    .index("by_paymentStatus", ["paymentStatus"])
+    .index("by_status_paymentStatus", ["status", "paymentStatus"]),
 
   // 21. wishlist - Sản phẩm yêu thích
   wishlist: defineTable({
@@ -795,6 +796,8 @@ export default defineSchema({
     .index("by_code", ["code"])
     .index("by_status", ["status"])
     .index("by_status_order", ["status", "order"])
+    .index("by_status_promotionType", ["status", "promotionType"])
+    .index("by_status_discountType", ["status", "discountType"])
     .index("by_startDate", ["startDate"])
     .index("by_endDate", ["endDate"])
     .index("by_promotionType", ["promotionType"])

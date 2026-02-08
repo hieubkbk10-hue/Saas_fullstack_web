@@ -3,6 +3,7 @@ import { getConvexClient } from '@/lib/convex';
 import { api } from '@/convex/_generated/api';
 import { getSEOSettings, getSiteSettings } from '@/lib/get-settings';
 import { JsonLd, generateArticleSchema, generateBreadcrumbSchema } from '@/components/seo/JsonLd';
+import { parseHreflang } from '@/lib/seo';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -31,10 +32,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = (post.metaDescription ?? post.excerpt) ?? seo.seo_description;
   const image = post.thumbnail ?? seo.seo_og_image;
   const keywords = seo.seo_keywords ? seo.seo_keywords.split(',').map(k => k.trim()) : [];
+  const languages = parseHreflang(seo.seo_hreflang);
 
   return {
     alternates: {
       canonical: `${baseUrl}/posts/${post.slug}`,
+      ...(Object.keys(languages).length > 0 && { languages }),
     },
     description,
     keywords,

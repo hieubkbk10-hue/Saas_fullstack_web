@@ -345,6 +345,29 @@ export const listByCustomer = query({
   }),
 });
 
+export const getRatingSummary = query({
+  args: {
+    targetId: v.string(),
+    targetType: targetType,
+  },
+  handler: async (ctx, args) => {
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_target_status", (q) =>
+        q.eq("targetType", args.targetType).eq("targetId", args.targetId).eq("status", "Approved")
+      )
+      .take(1000);
+
+    const ratings = comments.filter((comment) => typeof comment.rating === "number");
+    const count = ratings.length;
+    const total = ratings.reduce((sum, comment) => sum + (comment.rating ?? 0), 0);
+    const average = count > 0 ? total / count : 0;
+
+    return { average, count };
+  },
+  returns: v.object({ average: v.number(), count: v.number() }),
+});
+
 export const create = mutation({
   args: {
     authorEmail: v.optional(v.string()),

@@ -115,6 +115,8 @@ export async function create(
     categoryId: Id<"serviceCategories">;
     price?: number;
     duration?: string;
+    metaTitle?: string;
+    metaDescription?: string;
     status?: Doc<"services">["status"];
     order?: number;
     featured?: boolean;
@@ -133,6 +135,8 @@ export async function create(
     duration: args.duration,
     excerpt: args.excerpt,
     featured: args.featured,
+    metaDescription: args.metaDescription,
+    metaTitle: args.metaTitle,
     order,
     price: args.price,
     publishedAt: status === "Published" ? Date.now() : undefined,
@@ -156,6 +160,8 @@ export async function update(
     categoryId?: Id<"serviceCategories">;
     price?: number;
     duration?: string;
+    metaTitle?: string;
+    metaDescription?: string;
     status?: Doc<"services">["status"];
     order?: number;
     featured?: boolean;

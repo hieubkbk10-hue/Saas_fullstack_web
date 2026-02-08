@@ -1,6 +1,7 @@
 import { getConvexClient } from '@/lib/convex';
 import { api } from '@/convex/_generated/api';
 import { getSEOSettings, getSiteSettings } from '@/lib/get-settings';
+import { parseHreflang } from '@/lib/seo';
 import { JsonLd, generateBreadcrumbSchema, generateProductSchema } from '@/components/seo/JsonLd';
 import type { Metadata } from 'next';
 
@@ -31,6 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = product.metaDescription ?? (product.description ? product.description.replaceAll(/<[^>]*>/g, '').slice(0, 160) : seo.seo_description);
     const image = (product.image ?? (product.images && product.images[0])) ?? seo.seo_og_image;
     const keywords = seo.seo_keywords ? seo.seo_keywords.split(',').map(k => k.trim()) : [];
+    const languages = parseHreflang(seo.seo_hreflang);
     
     const price = product.salePrice ?? product.price;
     const formattedPrice = new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
@@ -38,6 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       alternates: {
         canonical: `${baseUrl}/products/${product.slug}`,
+        ...(Object.keys(languages).length > 0 && { languages }),
       },
       description,
       keywords,
@@ -82,7 +85,15 @@ export default async function ProductLayout({ params, children }: Props) {
     const productUrl = `${baseUrl}/products/${product.slug}`;
     const image = (product.image ?? (product.images && product.images[0])) ?? seo.seo_og_image;
 
+    const ratingSummary = await client.query(api.comments.getRatingSummary, {
+      targetId: product._id,
+      targetType: 'product',
+    });
+
     const productSchema = generateProductSchema({
+      aggregateRating: ratingSummary.count > 0
+        ? { ratingValue: Number(ratingSummary.average.toFixed(2)), reviewCount: ratingSummary.count }
+        : undefined,
       brand: site.site_name,
       description: (product.metaDescription ?? product.description?.replace(/<[^>]*>/g, '').slice(0, 160)) ?? seo.seo_description,
       image,

@@ -13,10 +13,17 @@ export interface SiteSettings {
 }
 
 export interface SEOSettings {
+  seo_business_type: string;
   seo_title: string;
   seo_description: string;
   seo_keywords: string;
   seo_og_image: string;
+  seo_opening_hours: string;
+  seo_price_range: string;
+  seo_geo_lat: string;
+  seo_geo_lng: string;
+  seo_hreflang: string;
+  seo_robots: string;
 }
 
 export interface ContactSettings {
@@ -34,7 +41,19 @@ export interface PublicSettings {
 
 const SETTINGS_KEYS = {
   contact: ["contact_email", "contact_phone", "contact_address", "contact_hotline"],
-  seo: ["seo_title", "seo_description", "seo_keywords", "seo_og_image"],
+  seo: [
+    "seo_title",
+    "seo_description",
+    "seo_keywords",
+    "seo_og_image",
+    "seo_robots",
+    "seo_business_type",
+    "seo_opening_hours",
+    "seo_price_range",
+    "seo_geo_lat",
+    "seo_geo_lng",
+    "seo_hreflang",
+  ],
   site: [
     "site_name",
     "site_tagline",
@@ -68,9 +87,16 @@ export const getSEOSettings =  async (): Promise<SEOSettings> => {
   return client.query(api.settings.getMultiple, {
     keys: SETTINGS_KEYS.seo,
   }).then((settings) => ({
+    seo_business_type: (settings.seo_business_type as string) || "LocalBusiness",
     seo_description: (settings.seo_description as string) || "",
+    seo_geo_lat: (settings.seo_geo_lat as string) || "",
+    seo_geo_lng: (settings.seo_geo_lng as string) || "",
+    seo_hreflang: (settings.seo_hreflang as string) || "",
     seo_keywords: (settings.seo_keywords as string) || "",
     seo_og_image: (settings.seo_og_image as string) || "",
+    seo_opening_hours: (settings.seo_opening_hours as string) || "",
+    seo_price_range: (settings.seo_price_range as string) || "",
+    seo_robots: (settings.seo_robots as string) || "",
     seo_title: (settings.seo_title as string) || "",
   }));
 };

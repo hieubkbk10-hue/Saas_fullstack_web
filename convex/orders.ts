@@ -234,18 +234,35 @@ export const listAdminWithOffset = query({
     const offset = args.offset ?? 0;
     const fetchLimit = Math.min(offset + limit + 50, 1000);
 
+    let paymentStatusFiltered = false;
     let orders: Doc<"orders">[] = [];
-    if (args.status) {
+    if (args.status && args.paymentStatus) {
+      orders = await ctx.db
+        .query("orders")
+        .withIndex("by_status_paymentStatus", (q) =>
+          q.eq("status", args.status!).eq("paymentStatus", args.paymentStatus!)
+        )
+        .order("desc")
+        .take(fetchLimit);
+      paymentStatusFiltered = true;
+    } else if (args.status) {
       orders = await ctx.db
         .query("orders")
         .withIndex("by_status", (q) => q.eq("status", args.status!))
         .order("desc")
         .take(fetchLimit);
+    } else if (args.paymentStatus) {
+      orders = await ctx.db
+        .query("orders")
+        .withIndex("by_paymentStatus", (q) => q.eq("paymentStatus", args.paymentStatus!))
+        .order("desc")
+        .take(fetchLimit);
+      paymentStatusFiltered = true;
     } else {
       orders = await ctx.db.query("orders").order("desc").take(fetchLimit);
     }
 
-    if (args.paymentStatus) {
+    if (args.paymentStatus && !paymentStatusFiltered) {
       orders = orders.filter((order) => order.paymentStatus === args.paymentStatus);
     }
 
@@ -269,17 +286,32 @@ export const countAdmin = query({
     const limit = 5000;
     const fetchLimit = limit + 1;
 
+    let paymentStatusFiltered = false;
     let orders: Doc<"orders">[] = [];
-    if (args.status) {
+    if (args.status && args.paymentStatus) {
+      orders = await ctx.db
+        .query("orders")
+        .withIndex("by_status_paymentStatus", (q) =>
+          q.eq("status", args.status!).eq("paymentStatus", args.paymentStatus!)
+        )
+        .take(fetchLimit);
+      paymentStatusFiltered = true;
+    } else if (args.status) {
       orders = await ctx.db
         .query("orders")
         .withIndex("by_status", (q) => q.eq("status", args.status!))
         .take(fetchLimit);
+    } else if (args.paymentStatus) {
+      orders = await ctx.db
+        .query("orders")
+        .withIndex("by_paymentStatus", (q) => q.eq("paymentStatus", args.paymentStatus!))
+        .take(fetchLimit);
+      paymentStatusFiltered = true;
     } else {
       orders = await ctx.db.query("orders").take(fetchLimit);
     }
 
-    if (args.paymentStatus) {
+    if (args.paymentStatus && !paymentStatusFiltered) {
       orders = orders.filter((order) => order.paymentStatus === args.paymentStatus);
     }
 
@@ -304,17 +336,32 @@ export const listAdminIds = query({
     const limit = Math.min(args.limit ?? 5000, 5000);
     const fetchLimit = limit + 1;
 
+    let paymentStatusFiltered = false;
     let orders: Doc<"orders">[] = [];
-    if (args.status) {
+    if (args.status && args.paymentStatus) {
+      orders = await ctx.db
+        .query("orders")
+        .withIndex("by_status_paymentStatus", (q) =>
+          q.eq("status", args.status!).eq("paymentStatus", args.paymentStatus!)
+        )
+        .take(fetchLimit);
+      paymentStatusFiltered = true;
+    } else if (args.status) {
       orders = await ctx.db
         .query("orders")
         .withIndex("by_status", (q) => q.eq("status", args.status!))
         .take(fetchLimit);
+    } else if (args.paymentStatus) {
+      orders = await ctx.db
+        .query("orders")
+        .withIndex("by_paymentStatus", (q) => q.eq("paymentStatus", args.paymentStatus!))
+        .take(fetchLimit);
+      paymentStatusFiltered = true;
     } else {
       orders = await ctx.db.query("orders").take(fetchLimit);
     }
 
-    if (args.paymentStatus) {
+    if (args.paymentStatus && !paymentStatusFiltered) {
       orders = orders.filter((order) => order.paymentStatus === args.paymentStatus);
     }
 

@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
+import { JsonLd, generateItemListSchema } from '@/components/seo/JsonLd';
+import { api } from '@/convex/_generated/api';
+import { getConvexClient } from '@/lib/convex';
 import { getSEOSettings, getSiteSettings } from '@/lib/get-settings';
+import { parseHreflang } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   const [site, seo] = await Promise.all([
@@ -12,10 +16,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = seo.seo_description || `Danh sách dịch vụ từ ${site.site_name}`;
   const keywords = seo.seo_keywords ? seo.seo_keywords.split(',').map(k => k.trim()) : [];
   const image = seo.seo_og_image;
+  const languages = parseHreflang(seo.seo_hreflang);
 
   return {
     alternates: {
       canonical: `${baseUrl}/services`,
+      ...(Object.keys(languages).length > 0 && { languages }),
     },
     description,
     keywords,
@@ -38,6 +44,29 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function ServicesListLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default async function ServicesListLayout({ children }: { children: React.ReactNode }) {
+  const client = getConvexClient();
+  const site = await getSiteSettings();
+  const baseUrl = (site.site_url || process.env.NEXT_PUBLIC_SITE_URL) ?? '';
+  const services = await client.query(api.services.listPublishedWithOffset, {
+    limit: 20,
+    offset: 0,
+    sortBy: 'newest',
+  });
+
+  const itemListSchema = generateItemListSchema({
+    items: services.map((service) => ({
+      name: service.title,
+      url: `${baseUrl}/services/${service.slug}`,
+    })),
+    name: 'Dịch vụ mới nhất',
+    url: `${baseUrl}/services`,
+  });
+
+  return (
+    <>
+      {services.length > 0 && <JsonLd data={itemListSchema} />}
+      {children}
+    </>
+  );
 }

@@ -28,6 +28,8 @@ export default function ServiceEditPage({ params }: { params: Promise<{ id: stri
   const [slug, setSlug] = useState('');
   const [content, setContent] = useState('');
   const [excerpt, setExcerpt] = useState('');
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
   const [thumbnail, setThumbnail] = useState<string | undefined>();
   const [categoryId, setCategoryId] = useState('');
   const [price, setPrice] = useState<number | undefined>();
@@ -65,6 +67,8 @@ export default function ServiceEditPage({ params }: { params: Promise<{ id: stri
       setSlug(serviceData.slug);
       setContent(serviceData.content);
       setExcerpt(serviceData.excerpt ?? '');
+      setMetaTitle(serviceData.metaTitle ?? '');
+      setMetaDescription(serviceData.metaDescription ?? '');
       setThumbnail(serviceData.thumbnail);
       setCategoryId(serviceData.categoryId);
       setPrice(serviceData.price);
@@ -87,6 +91,8 @@ export default function ServiceEditPage({ params }: { params: Promise<{ id: stri
         excerpt: excerpt.trim() || undefined,
         featured,
         id: id as Id<"services">,
+        metaDescription: enabledFields.has('metaDescription') ? metaDescription.trim() || undefined : undefined,
+        metaTitle: enabledFields.has('metaTitle') ? metaTitle.trim() || undefined : undefined,
         price,
         slug: slug.trim(),
         status,
@@ -157,6 +163,56 @@ export default function ServiceEditPage({ params }: { params: Promise<{ id: stri
               </div>
             </CardContent>
           </Card>
+
+          {(enabledFields.has('metaTitle') || enabledFields.has('metaDescription')) && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">SEO</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                {enabledFields.has('metaTitle') && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Meta Title</Label>
+                      <span className={`text-xs ${metaTitle.length > 60 ? 'text-red-500' : 'text-slate-400'}`}>
+                        {metaTitle.length}/60
+                      </span>
+                    </div>
+                    <Input
+                      value={metaTitle}
+                      onChange={(e) =>{  setMetaTitle(e.target.value); }}
+                      placeholder="Tiêu đề hiển thị trên Google"
+                    />
+                  </div>
+                )}
+                {enabledFields.has('metaDescription') && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Meta Description</Label>
+                      <span className={`text-xs ${metaDescription.length > 160 ? 'text-red-500' : 'text-slate-400'}`}>
+                        {metaDescription.length}/160
+                      </span>
+                    </div>
+                    <textarea
+                      value={metaDescription}
+                      onChange={(e) =>{  setMetaDescription(e.target.value); }}
+                      className="w-full min-h-[90px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                      placeholder="Mô tả ngắn cho kết quả tìm kiếm"
+                    />
+                  </div>
+                )}
+                <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm">
+                  <div className="text-blue-600 font-medium truncate">
+                    {metaTitle.trim() || title || 'Tên dịch vụ'}
+                  </div>
+                  <div className="text-emerald-600 text-xs">
+                    /services/{slug || 'dich-vu'}
+                  </div>
+                  <div className="text-slate-600 text-xs mt-1 line-clamp-2">
+                    {metaDescription.trim() || excerpt || 'Mô tả ngắn sẽ hiển thị tại đây.'}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
         
         <div className="space-y-6">

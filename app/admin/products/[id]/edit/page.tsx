@@ -42,6 +42,8 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
   const [stock, setStock] = useState('0');
   const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
+  const [metaTitle, setMetaTitle] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
   const [image, setImage] = useState<string | undefined>();
   const [status, setStatus] = useState<'Draft' | 'Active' | 'Archived'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +72,8 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
       setStock(productData.stock.toString());
       setCategoryId(productData.categoryId);
       setDescription(productData.description ?? '');
+      setMetaTitle(productData.metaTitle ?? '');
+      setMetaDescription(productData.metaDescription ?? '');
       setImage(productData.image);
       setStatus(productData.status);
       setHasVariants(productData.hasVariants ?? false);
@@ -108,6 +112,8 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
         id: id as Id<"products">,
         hasVariants: variantEnabled ? hasVariants : undefined,
         image,
+        metaDescription: enabledFields.has('metaDescription') ? metaDescription.trim() || undefined : undefined,
+        metaTitle: enabledFields.has('metaTitle') ? metaTitle.trim() || undefined : undefined,
         name: name.trim(),
         optionIds: variantEnabled ? (hasVariants ? selectedOptionIds : []) : undefined,
         price: parseInt(price) || 0,
@@ -199,6 +205,56 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
               )}
             </CardContent>
           </Card>
+
+          {(enabledFields.has('metaTitle') || enabledFields.has('metaDescription')) && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">SEO</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                {enabledFields.has('metaTitle') && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Meta Title</Label>
+                      <span className={`text-xs ${metaTitle.length > 60 ? 'text-red-500' : 'text-slate-400'}`}>
+                        {metaTitle.length}/60
+                      </span>
+                    </div>
+                    <Input
+                      value={metaTitle}
+                      onChange={(e) =>{  setMetaTitle(e.target.value); }}
+                      placeholder="Tiêu đề hiển thị trên Google"
+                    />
+                  </div>
+                )}
+                {enabledFields.has('metaDescription') && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Meta Description</Label>
+                      <span className={`text-xs ${metaDescription.length > 160 ? 'text-red-500' : 'text-slate-400'}`}>
+                        {metaDescription.length}/160
+                      </span>
+                    </div>
+                    <textarea
+                      value={metaDescription}
+                      onChange={(e) =>{  setMetaDescription(e.target.value); }}
+                      className="w-full min-h-[90px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                      placeholder="Mô tả ngắn cho kết quả tìm kiếm"
+                    />
+                  </div>
+                )}
+                <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm">
+                  <div className="text-blue-600 font-medium truncate">
+                    {metaTitle.trim() || name || 'Tên sản phẩm'}
+                  </div>
+                  <div className="text-emerald-600 text-xs">
+                    /products/{slug || 'san-pham'}
+                  </div>
+                  <div className="text-slate-600 text-xs mt-1 line-clamp-2">
+                    {metaDescription.trim() || 'Mô tả ngắn sẽ hiển thị tại đây.'}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader><CardTitle className="text-base">Giá & Kho hàng</CardTitle></CardHeader>

@@ -75,6 +75,22 @@ const GROUP_LABELS: Record<string, string> = {
   social: 'Mạng xã hội',
 };
 
+const SEO_META_LIMITS: Record<string, number> = {
+  seo_description: 160,
+  seo_title: 60,
+};
+
+const BUSINESS_TYPE_OPTIONS = [
+  'LocalBusiness',
+  'Store',
+  'Restaurant',
+  'CafeOrCoffeeShop',
+  'Hotel',
+  'MedicalClinic',
+  'RealEstateAgent',
+  'ProfessionalService',
+];
+
 export default function SettingsPage() {
   return (
     <ModuleGuard moduleKey={MODULE_KEY}>
@@ -234,6 +250,9 @@ function SettingsContent() {
   const renderField = (field: NonNullable<typeof fieldsData>[number]) => {
     const value = form[field.fieldKey] ?? '';
     const key = field.fieldKey;
+    const metaLimit = SEO_META_LIMITS[key];
+    const showCounter = Boolean(metaLimit);
+    const counterText = showCounter ? `${value.length}/${metaLimit}` : null;
 
     switch (field.type) {
       case 'color': {
@@ -287,13 +306,27 @@ function SettingsContent() {
       case 'textarea': {
         return (
           <div className="space-y-2" key={key}>
-            <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+              {counterText && (
+                <span className={`text-xs ${value.length > metaLimit ? 'text-red-500' : 'text-slate-400'}`}>
+                  {counterText}
+                </span>
+              )}
+            </div>
             <textarea
               value={value}
               onChange={(e) =>{  updateField(key, e.target.value); }}
-              className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
-              placeholder={`Nhập ${field.name.toLowerCase()}...`}
+              className={`w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm ${key === 'seo_robots' || key === 'seo_hreflang' ? 'font-mono text-xs' : ''}`}
+              placeholder={
+                key === 'seo_hreflang'
+                  ? 'vi:https://example.com\nen:https://example.com/en'
+                  : `Nhập ${field.name.toLowerCase()}...`
+              }
             />
+            {key === 'seo_hreflang' && (
+              <p className="text-xs text-slate-500">Mỗi dòng một ngôn ngữ theo định dạng locale:url.</p>
+            )}
           </div>
         );
       }
@@ -361,6 +394,23 @@ function SettingsContent() {
                 <option value="ssl">SSL</option>
                 <option value="">None</option>
               </select>
+            </div>
+          );
+        }
+        if (key === 'seo_business_type') {
+          return (
+            <div className="space-y-2" key={key}>
+              <Label>{field.name}</Label>
+              <select
+                value={value}
+                onChange={(e) =>{  updateField(key, e.target.value); }}
+                className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              >
+                {BUSINESS_TYPE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-500">Chọn loại hình phù hợp để Schema LocalBusiness chính xác hơn.</p>
             </div>
           );
         }
@@ -450,12 +500,28 @@ function SettingsContent() {
       default: { // Text
         return (
           <div className="space-y-2" key={key}>
-            <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+              {counterText && (
+                <span className={`text-xs ${value.length > metaLimit ? 'text-red-500' : 'text-slate-400'}`}>
+                  {counterText}
+                </span>
+              )}
+            </div>
             <Input
               value={value}
               onChange={(e) =>{  updateField(key, e.target.value); }}
-              placeholder={`Nhập ${field.name.toLowerCase()}...`}
+              placeholder={
+                key === 'seo_opening_hours'
+                  ? 'Mo-Su 08:00-22:00'
+                  : key === 'seo_price_range'
+                    ? '$$'
+                    : `Nhập ${field.name.toLowerCase()}...`
+              }
             />
+            {key === 'seo_opening_hours' && (
+              <p className="text-xs text-slate-500">Theo chuẩn Schema.org OpeningHours (VD: Mo-Fr 09:00-18:00).</p>
+            )}
           </div>
         );
       }

@@ -153,6 +153,8 @@ export async function create(
     thumbnail?: string;
     categoryId: Id<"postCategories">;
     authorName?: string;
+    metaTitle?: string;
+    metaDescription?: string;
     status?: Doc<"posts">["status"];
     order?: number;
   }
@@ -169,6 +171,8 @@ export async function create(
     categoryId: args.categoryId,
     content: args.content,
     excerpt: args.excerpt,
+    metaDescription: args.metaDescription,
+    metaTitle: args.metaTitle,
     order,
     publishedAt: status === "Published" ? Date.now() : undefined,
     slug: args.slug,
@@ -193,6 +197,8 @@ export async function update(
     excerpt?: string;
     thumbnail?: string;
     categoryId?: Id<"postCategories">;
+    metaTitle?: string;
+    metaDescription?: string;
     status?: Doc<"posts">["status"];
     order?: number;
   }
