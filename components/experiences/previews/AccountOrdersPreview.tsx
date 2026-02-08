@@ -317,6 +317,10 @@ export function AccountOrdersPreview({
       status: statusKeys[order.statusIndex % statusKeys.length],
     }));
   }, [statusKeys]);
+  const timelineLabels = useMemo(
+    () => [...orderStatuses].sort((a, b) => a.step - b.step).map((status) => status.label),
+    [orderStatuses]
+  );
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [drawerOrder, setDrawerOrder] = useState<(typeof mockOrders)[number] | null>(null);
@@ -712,7 +716,7 @@ export function AccountOrdersPreview({
         showItems={showOrderItems}
         showTimeline={showTimeline}
         timelineStep={drawerStatus?.step ?? 1}
-        timelineLabels={TIMELINE_STEPS}
+        timelineLabels={timelineLabels}
         showPaymentMethod={showPaymentMethod}
         paymentMethod={drawerOrder?.paymentMethod ?? 'Đang cập nhật'}
         showShippingMethod={showShippingMethod}

@@ -91,6 +91,7 @@ export function OrderDetailDrawer({
   const badgeColor = statusColor ?? brandColor;
   const timelineSteps = timelineLabels ?? [];
   const safeStep = Math.min(Math.max(timelineStep ?? 1, 1), timelineSteps.length || 1);
+  const currentStepLabel = statusLabel || timelineSteps[safeStep - 1] || 'Đang cập nhật';
 
   return (
     <div className="fixed inset-0 z-[70] flex">
@@ -153,7 +154,7 @@ export function OrderDetailDrawer({
                   );
                 })}
               </div>
-              <div className="text-xs text-slate-500">Bước hiện tại: {timelineSteps[safeStep - 1]}</div>
+              <div className="text-xs text-slate-500">Bước hiện tại: {currentStepLabel}</div>
             </div>
           )}
 

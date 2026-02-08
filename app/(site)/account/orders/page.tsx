@@ -185,6 +185,10 @@ export default function AccountOrdersPage() {
     () => orderStatuses.find((status) => status.key === 'Delivered')?.key ?? statusKeys[statusKeys.length - 1],
     [orderStatuses, statusKeys]
   );
+  const timelineLabels = useMemo(
+    () => [...orderStatuses].sort((a, b) => a.step - b.step).map((status) => status.label),
+    [orderStatuses]
+  );
   const stockEnabled = stockFeature?.enabled ?? false;
 
   const ordersList = useMemo(() => orders ?? [], [orders]);
@@ -809,7 +813,7 @@ export default function AccountOrdersPage() {
             showItems={config.showOrderItems}
             showTimeline={config.showTimeline}
             timelineStep={drawerStatus?.step ?? 1}
-            timelineLabels={TIMELINE_STEPS}
+            timelineLabels={timelineLabels}
             showPaymentMethod={config.showPaymentMethod}
             paymentMethod={drawerPaymentMethod}
             showShippingMethod={config.showShippingMethod}
