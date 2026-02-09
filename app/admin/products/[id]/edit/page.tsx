@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { LexicalEditor } from '../../../components/LexicalEditor';
 import { ImageUpload } from '../../../components/ImageUpload';
+import type { ImageItem } from '../../../components/MultiImageUploader';
+import { MultiImageUploader } from '../../../components/MultiImageUploader';
 import { ModuleGuard } from '../../../components/ModuleGuard';
 import { DigitalCredentialsForm } from '@/components/orders/DigitalCredentialsForm';
 import { stripHtml, truncateText } from '@/lib/seo';
@@ -47,6 +49,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [image, setImage] = useState<string | undefined>();
+  const [galleryItems, setGalleryItems] = useState<ImageItem[]>([]);
   const [status, setStatus] = useState<'Draft' | 'Active' | 'Archived'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -92,6 +95,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
       setMetaTitle(productData.metaTitle ?? '');
       setMetaDescription(productData.metaDescription ?? '');
       setImage(productData.image);
+      setGalleryItems((productData.images ?? []).map((url, index) => ({ id: `${productData._id}-img-${index}`, url })));
       setStatus(productData.status);
       setHasVariants(productData.hasVariants ?? false);
       setSelectedOptionIds(productData.optionIds ?? []);
@@ -129,12 +133,14 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
       const resolvedStock = productType === 'digital' ? 0 : (parseInt(stock) || 0);
       const resolvedMetaTitle = truncateText(name.trim(), 60);
       const resolvedMetaDescription = truncateText(stripHtml(description || ''), 160);
+      const resolvedImages = galleryItems.map(item => item.url).filter(Boolean);
       await updateProduct({
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
         id: id as Id<"products">,
         hasVariants: variantEnabled ? hasVariants : undefined,
         image,
+        images: enabledFields.has('images') ? resolvedImages : undefined,
         metaDescription: enabledFields.has('metaDescription')
           ? (metaDescription.trim() || resolvedMetaDescription || undefined)
           : undefined,
@@ -453,6 +459,27 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
               <ImageUpload value={image} onChange={setImage} folder="products" />
             </CardContent>
           </Card>
+
+          {enabledFields.has('images') && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Thư viện ảnh</CardTitle></CardHeader>
+              <CardContent>
+                <MultiImageUploader<ImageItem>
+                  items={galleryItems}
+                  onChange={setGalleryItems}
+                  folder="products"
+                  imageKey="url"
+                  minItems={0}
+                  maxItems={20}
+                  aspectRatio="square"
+                  columns={2}
+                  addButtonText="Thêm ảnh"
+                  emptyText="Chưa có ảnh trong thư viện"
+                  layout="vertical"
+                />
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader><CardTitle className="text-base">Thống kê</CardTitle></CardHeader>

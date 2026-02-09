@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
 import { LexicalEditor } from '../../components/LexicalEditor';
 import { ImageUpload } from '../../components/ImageUpload';
+import type { ImageItem } from '../../components/MultiImageUploader';
+import { MultiImageUploader } from '../../components/MultiImageUploader';
 import { ModuleGuard } from '../../components/ModuleGuard';
 import { DigitalCredentialsForm } from '@/components/orders/DigitalCredentialsForm';
 import { stripHtml, truncateText } from '@/lib/seo';
@@ -124,6 +126,7 @@ function ProductCreateContent() {
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [image, setImage] = useState<string | undefined>();
+  const [galleryItems, setGalleryItems] = useState<ImageItem[]>([]);
   const [status, setStatus] = useState<'Draft' | 'Active' | 'Archived'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -219,11 +222,13 @@ function ProductCreateContent() {
       const resolvedStock = productType === 'digital' ? 0 : (Number.parseInt(stock) || 0);
       const resolvedMetaTitle = truncateText(name.trim(), 60);
       const resolvedMetaDescription = truncateText(stripHtml(description || ''), 160);
+      const resolvedImages = galleryItems.map(item => item.url).filter(Boolean);
       await createProduct({
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
         hasVariants: variantEnabled ? hasVariants : false,
         image,
+        images: enabledFields.has('images') ? resolvedImages : undefined,
         metaDescription: enabledFields.has('metaDescription')
           ? (metaDescription.trim() || resolvedMetaDescription || undefined)
           : undefined,
@@ -524,6 +529,27 @@ function ProductCreateContent() {
               <ImageUpload value={image} onChange={setImage} folder="products" />
             </CardContent>
           </Card>
+
+          {enabledFields.has('images') && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Thư viện ảnh</CardTitle></CardHeader>
+              <CardContent>
+                <MultiImageUploader<ImageItem>
+                  items={galleryItems}
+                  onChange={setGalleryItems}
+                  folder="products"
+                  imageKey="url"
+                  minItems={0}
+                  maxItems={20}
+                  aspectRatio="square"
+                  columns={2}
+                  addButtonText="Thêm ảnh"
+                  emptyText="Chưa có ảnh trong thư viện"
+                  layout="vertical"
+                />
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
