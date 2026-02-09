@@ -401,19 +401,19 @@ export function MultiImageUploader<T extends ImageItem>({
       return;
     }
 
-    const dragIndex = items.findIndex(item => item.id === draggedItemId);
-    const dropIndex = items.findIndex(item => item.id === targetId);
+    const dragIndex = itemsRef.current.findIndex(item => item.id === draggedItemId);
+    const dropIndex = itemsRef.current.findIndex(item => item.id === targetId);
 
     if (dragIndex === -1 || dropIndex === -1) {return;}
 
-    const newItems = [...items];
+    const newItems = [...itemsRef.current];
     const [draggedItem] = newItems.splice(dragIndex, 1);
     newItems.splice(dropIndex, 0, draggedItem);
     onChange(newItems);
 
     setDraggedItemId(null);
     setDragOverItemId(null);
-  }, [draggedItemId, items, onChange]);
+  }, [draggedItemId, onChange]);
 
   const handleAdd = useCallback(() => {
     if (items.length >= maxItems) {
