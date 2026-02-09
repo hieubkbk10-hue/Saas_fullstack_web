@@ -12,7 +12,7 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
 import type { GenericMutationCtx } from 'convex/server';
-import type { DataModel } from './_generated/dataModel';
+import type { DataModel, TableNames } from './_generated/dataModel';
 import {
   resolveDependencies,
   checkDependencies,
@@ -501,6 +501,76 @@ export const clearAll = mutation({
       }
       const seeder = new SeederClass(ctx);
       await seeder.clearData();
+    }
+
+    return { success: true };
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+});
+
+export const factoryReset = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const tables: TableNames[] = [
+      'adminModules',
+      'moduleFields',
+      'moduleFeatures',
+      'moduleSettings',
+      'systemPresets',
+      'convexDashboard',
+      'usageStats',
+      'systemSessions',
+      'adminUsers',
+      'adminSessions',
+      'rateLimitBuckets',
+      'users',
+      'roles',
+      'userStats',
+      'roleStats',
+      'homeComponentStats',
+      'notificationStats',
+      'promotionStats',
+      'customers',
+      'customerSessions',
+      'productCategories',
+      'products',
+      'productOptions',
+      'productOptionValues',
+      'productVariants',
+      'productStats',
+      'postCategories',
+      'posts',
+      'comments',
+      'images',
+      'mediaStats',
+      'mediaFolders',
+      'menus',
+      'menuItems',
+      'homeComponents',
+      'settings',
+      'activityLogs',
+      'orders',
+      'wishlist',
+      'carts',
+      'cartItems',
+      'notifications',
+      'pageViews',
+      'serviceCategories',
+      'services',
+      'promotions',
+      'promotionUsage',
+      'seedProgress',
+    ];
+
+    for (const table of [...tables].reverse()) {
+      let hasMore = true;
+      while (hasMore) {
+        const records = await ctx.db.query(table).take(500);
+        await Promise.all(records.map((record) => ctx.db.delete(record._id)));
+        hasMore = records.length === 500;
+      }
     }
 
     return { success: true };

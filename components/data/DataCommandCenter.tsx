@@ -9,6 +9,7 @@ import { CustomSeedDialog } from '@/components/modules/CustomSeedDialog';
 import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
 import { Card, Badge } from '@/app/admin/components/ui';
 import { DependencyTree } from './DependencyTree';
+import { FactoryResetDialog } from './FactoryResetDialog';
 import { QuickActionsCard } from './QuickActionsCard';
 import { TableDetailsCard } from './TableDetailsCard';
 
@@ -22,13 +23,16 @@ export function DataCommandCenter() {
   const seedModule = useMutation(api.seedManager.seedModule);
   const clearModule = useMutation(api.seedManager.clearModule);
   const clearAll = useMutation(api.seedManager.clearAll);
+  const factoryReset = useMutation(api.seedManager.factoryReset);
 
   const [seedingModule, setSeedingModule] = useState<string | null>(null);
   const [clearingModule, setClearingModule] = useState<string | null>(null);
   const [isGlobalSeeding, setIsGlobalSeeding] = useState(false);
   const [isGlobalClearing, setIsGlobalClearing] = useState(false);
+  const [isFactoryResetting, setIsFactoryResetting] = useState(false);
   const [currentPreset, setCurrentPreset] = useState<string | null>(null);
   const [showCustomDialog, setShowCustomDialog] = useState(false);
+  const [showFactoryResetDialog, setShowFactoryResetDialog] = useState(false);
 
   const stats = useMemo(() => {
     const totalTables = tableStats?.length ?? 0;
@@ -87,6 +91,20 @@ export function DataCommandCenter() {
     }
   };
 
+  const handleFactoryReset = async () => {
+    setIsFactoryResetting(true);
+    try {
+      await factoryReset({});
+      toast.success('Đã xóa sạch toàn bộ dữ liệu');
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Factory reset thất bại');
+      return false;
+    } finally {
+      setIsFactoryResetting(false);
+    }
+  };
+
   const handleSeedModule = async (moduleKey: string) => {
     const defaultQuantity = getSeedModuleInfo(moduleKey)?.defaultQuantity ?? 10;
     setSeedingModule(moduleKey);
@@ -136,9 +154,11 @@ export function DataCommandCenter() {
         onSeedPreset={handleSeedPreset}
         onClearAll={handleClearAll}
         onResetAll={handleResetAll}
+        onFactoryReset={() => setShowFactoryResetDialog(true)}
         onOpenCustomDialog={() => setShowCustomDialog(true)}
         isSeeding={isGlobalSeeding}
         isClearing={isGlobalClearing}
+        isFactoryResetting={isFactoryResetting}
         currentPreset={currentPreset}
       />
 
@@ -168,7 +188,7 @@ export function DataCommandCenter() {
           <div className="space-y-1">
             <p>Seed tự động theo thứ tự dependency (Level 0 → 4).</p>
             <p>Clear tự động theo thứ tự ngược (Level 4 → 0) để tránh broken relation.</p>
-            <p>Chỉ dùng trong môi trường development.</p>
+            <p>Factory reset yêu cầu xác nhận 2 bước, dùng cẩn thận ở production.</p>
           </div>
         </div>
       </Card>
@@ -177,6 +197,13 @@ export function DataCommandCenter() {
         open={showCustomDialog}
         onOpenChange={setShowCustomDialog}
         onComplete={() => setShowCustomDialog(false)}
+      />
+
+      <FactoryResetDialog
+        open={showFactoryResetDialog}
+        onOpenChange={setShowFactoryResetDialog}
+        onConfirm={handleFactoryReset}
+        isLoading={isFactoryResetting}
       />
     </div>
   );

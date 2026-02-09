@@ -1,16 +1,18 @@
 'use client';
 
 import React from 'react';
-import { Database, RefreshCw, Settings, Sparkles, Package, Rocket, Zap, Trash2 } from 'lucide-react';
+import { AlertTriangle, Database, RefreshCw, Settings, Sparkles, Package, Rocket, Zap, Trash2 } from 'lucide-react';
 import { Button, Card, cn } from '@/app/admin/components/ui';
 
 interface QuickActionsCardProps {
   onSeedPreset: (preset: 'minimal' | 'standard' | 'large' | 'demo') => void;
   onClearAll: () => void;
   onResetAll: () => void;
+  onFactoryReset: () => void;
   onOpenCustomDialog: () => void;
   isSeeding: boolean;
   isClearing: boolean;
+  isFactoryResetting: boolean;
   currentPreset: string | null;
 }
 
@@ -49,11 +51,14 @@ export function QuickActionsCard({
   onSeedPreset,
   onClearAll,
   onResetAll,
+  onFactoryReset,
   onOpenCustomDialog,
   isSeeding,
   isClearing,
+  isFactoryResetting,
   currentPreset,
 }: QuickActionsCardProps) {
+  const isBusy = isSeeding || isClearing || isFactoryResetting;
   return (
     <Card className="p-5 border border-slate-200 dark:border-slate-800">
       <div className="flex items-center justify-between mb-4">
@@ -67,7 +72,7 @@ export function QuickActionsCard({
           variant="outline"
           size="sm"
           onClick={onOpenCustomDialog}
-          disabled={isSeeding || isClearing}
+          disabled={isBusy}
           className="gap-2"
         >
           <Settings size={14} /> Custom Seed
@@ -82,12 +87,12 @@ export function QuickActionsCard({
             <button
               key={preset.key}
               onClick={() => onSeedPreset(preset.key)}
-              disabled={isSeeding || isClearing}
+              disabled={isBusy}
               className={cn(
                 'rounded-lg border p-3 text-left transition-all hover:shadow-md',
                 preset.color,
                 isActive && 'ring-2 ring-cyan-400',
-                (isSeeding || isClearing) && 'opacity-60 cursor-not-allowed'
+                isBusy && 'opacity-60 cursor-not-allowed'
               )}
             >
               <Icon size={18} />
@@ -102,7 +107,7 @@ export function QuickActionsCard({
         <Button
           variant="outline"
           onClick={onClearAll}
-          disabled={isSeeding || isClearing}
+          disabled={isBusy}
           className="gap-2 text-rose-600 hover:text-rose-700"
         >
           <Trash2 size={14} /> Clear All
@@ -110,10 +115,18 @@ export function QuickActionsCard({
         <Button
           variant="outline"
           onClick={onResetAll}
-          disabled={isSeeding || isClearing}
+          disabled={isBusy}
           className="gap-2"
         >
           <RefreshCw size={14} /> Reset All
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={onFactoryReset}
+          disabled={isBusy}
+          className="gap-2"
+        >
+          <AlertTriangle size={14} /> Factory Reset
         </Button>
       </div>
     </Card>
