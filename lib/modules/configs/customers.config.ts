@@ -21,5 +21,5 @@
    
    conventionNote: 'Email unique và lowercase. Mật khẩu hash bằng bcrypt. ordersCount và totalSpent tự động cập nhật.',
    
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

@@ -40,6 +40,7 @@ export {
   MODULE_METADATA,
   SEED_PRESETS,
   getDefaultQuantity,
+  getTableName,
   getModuleInfo,
   type PresetType,
 } from './dependencies';

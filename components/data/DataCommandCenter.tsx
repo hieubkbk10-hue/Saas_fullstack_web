@@ -1,0 +1,183 @@
+'use client';
+
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
+import { AlertTriangle, Database } from 'lucide-react';
+import { api } from '@/convex/_generated/api';
+import { toast } from 'sonner';
+import { CustomSeedDialog } from '@/components/modules/CustomSeedDialog';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
+import { Card, Badge } from '@/app/admin/components/ui';
+import { DependencyTree } from './DependencyTree';
+import { QuickActionsCard } from './QuickActionsCard';
+import { TableDetailsCard } from './TableDetailsCard';
+
+type PresetType = 'minimal' | 'standard' | 'large' | 'demo';
+
+export function DataCommandCenter() {
+  const dependencyTree = useQuery(api.seedManager.getDependencyTree);
+  const tableStats = useQuery(api.dataManager.getTableStats);
+
+  const seedPreset = useMutation(api.seedManager.seedPreset);
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearModule = useMutation(api.seedManager.clearModule);
+  const clearAll = useMutation(api.seedManager.clearAll);
+
+  const [seedingModule, setSeedingModule] = useState<string | null>(null);
+  const [clearingModule, setClearingModule] = useState<string | null>(null);
+  const [isGlobalSeeding, setIsGlobalSeeding] = useState(false);
+  const [isGlobalClearing, setIsGlobalClearing] = useState(false);
+  const [currentPreset, setCurrentPreset] = useState<string | null>(null);
+  const [showCustomDialog, setShowCustomDialog] = useState(false);
+
+  const stats = useMemo(() => {
+    const totalTables = tableStats?.length ?? 0;
+    const totalRecords = tableStats?.reduce((sum, item) => sum + item.count, 0) ?? 0;
+    const emptyTables = tableStats?.filter((item) => item.count === 0).length ?? 0;
+    return { emptyTables, totalRecords, totalTables };
+  }, [tableStats]);
+
+  const handleSeedPreset = async (preset: PresetType) => {
+    if (!confirm(`Seed preset "${preset}"?`)) {
+      return;
+    }
+    setIsGlobalSeeding(true);
+    setCurrentPreset(preset);
+    try {
+      await seedPreset({ preset });
+      toast.success(`Đã seed preset ${preset}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Seed thất bại');
+    } finally {
+      setIsGlobalSeeding(false);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!confirm('Xóa toàn bộ dữ liệu? Không thể hoàn tác.')) {
+      return;
+    }
+    setIsGlobalClearing(true);
+    try {
+      await clearAll({ excludeSystem: false });
+      toast.success('Đã xóa toàn bộ dữ liệu');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Clear thất bại');
+    } finally {
+      setIsGlobalClearing(false);
+    }
+  };
+
+  const handleResetAll = async () => {
+    if (!confirm('Reset = Clear + Seed lại. Tiếp tục?')) {
+      return;
+    }
+    const presetToUse = (currentPreset ?? 'standard') as PresetType;
+    setIsGlobalClearing(true);
+    setIsGlobalSeeding(true);
+    try {
+      await clearAll({ excludeSystem: false });
+      await seedPreset({ preset: presetToUse, force: true });
+      toast.success(`Đã reset với preset ${presetToUse}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Reset thất bại');
+    } finally {
+      setIsGlobalClearing(false);
+      setIsGlobalSeeding(false);
+    }
+  };
+
+  const handleSeedModule = async (moduleKey: string) => {
+    const defaultQuantity = getSeedModuleInfo(moduleKey)?.defaultQuantity ?? 10;
+    setSeedingModule(moduleKey);
+    try {
+      await seedModule({ module: moduleKey, quantity: defaultQuantity });
+      toast.success(`Đã seed ${moduleKey}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Seed thất bại');
+    } finally {
+      setSeedingModule(null);
+    }
+  };
+
+  const handleClearModule = async (moduleKey: string) => {
+    if (!confirm(`Clear dữ liệu module ${moduleKey}?`)) {
+      return;
+    }
+    setClearingModule(moduleKey);
+    try {
+      await clearModule({ module: moduleKey });
+      toast.success(`Đã clear ${moduleKey}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Clear thất bại');
+    } finally {
+      setClearingModule(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <Database size={22} className="text-cyan-500" /> Data Command Center
+          </h2>
+          <p className="text-sm text-slate-500">Quản lý toàn bộ dữ liệu hệ thống từ một nơi</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2 text-xs">
+          <Badge variant="secondary">{stats.totalTables} tables</Badge>
+          <Badge variant="secondary">{stats.totalRecords.toLocaleString()} records</Badge>
+          <Badge variant="secondary">{stats.emptyTables} empty</Badge>
+        </div>
+      </div>
+
+      <QuickActionsCard
+        onSeedPreset={handleSeedPreset}
+        onClearAll={handleClearAll}
+        onResetAll={handleResetAll}
+        onOpenCustomDialog={() => setShowCustomDialog(true)}
+        isSeeding={isGlobalSeeding}
+        isClearing={isGlobalClearing}
+        currentPreset={currentPreset}
+      />
+
+      {dependencyTree && (
+        <DependencyTree
+          data={dependencyTree}
+          seedingModule={seedingModule}
+          clearingModule={clearingModule}
+          onSeedModule={handleSeedModule}
+          onClearModule={handleClearModule}
+        />
+      )}
+
+      {tableStats && (
+        <TableDetailsCard
+          tableStats={tableStats}
+          seedingTable={seedingModule}
+          clearingTable={clearingModule}
+          onSeedTable={handleSeedModule}
+          onClearTable={handleClearModule}
+        />
+      )}
+
+      <Card className="p-4 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
+        <div className="flex items-start gap-3 text-sm text-blue-700 dark:text-blue-300">
+          <AlertTriangle size={16} className="mt-0.5" />
+          <div className="space-y-1">
+            <p>Seed tự động theo thứ tự dependency (Level 0 → 4).</p>
+            <p>Clear tự động theo thứ tự ngược (Level 4 → 0) để tránh broken relation.</p>
+            <p>Chỉ dùng trong môi trường development.</p>
+          </div>
+        </div>
+      </Card>
+
+      <CustomSeedDialog
+        open={showCustomDialog}
+        onOpenChange={setShowCustomDialog}
+        onComplete={() => setShowCustomDialog(false)}
+      />
+    </div>
+  );
+}

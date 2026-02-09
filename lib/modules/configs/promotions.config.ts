@@ -27,5 +27,5 @@
  
   conventionNote: 'promotionType: coupon/campaign/flash_sale/bundle/loyalty. discountType: percent, fixed, buy_x_get_y, buy_a_get_b, tiered, free_shipping, gift. code unique + uppercase.',
  
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

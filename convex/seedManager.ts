@@ -22,6 +22,7 @@ import {
   BaseSeeder,
   SEEDER_REGISTRY,
   listSeedableModuleKeys,
+  getTableName,
 } from './seeders';
 import { SEED_MODULE_METADATA } from '../lib/modules/seed-registry';
 import type { SeedResult } from './seeders/base';
@@ -51,6 +52,39 @@ const seedProgressValidator = v.object({
 });
 
 const SEEDERS: Record<string, new (ctx: GenericMutationCtx<DataModel>) => BaseSeeder> = SEEDER_REGISTRY;
+
+// ============================================================
+// DEPENDENCY LEVELS (Seed: 0 → 4, Clear: 4 → 0)
+// ============================================================
+
+export const DEPENDENCY_LEVELS: Record<number, string[]> = {
+  0: ['roles', 'postCategories', 'productCategories', 'serviceCategories', 'settings', 'media', 'adminModules', 'systemPresets'],
+  1: ['users', 'customers'],
+  2: ['posts', 'products', 'services', 'menus', 'homepage'],
+  3: ['comments', 'orders', 'cart', 'wishlist', 'promotions'],
+  4: ['analytics', 'notifications'],
+};
+
+export function getSeedOrder(): string[] {
+  return Object.keys(DEPENDENCY_LEVELS)
+    .sort((a, b) => Number(a) - Number(b))
+    .flatMap(level => DEPENDENCY_LEVELS[Number(level)]);
+}
+
+export function getClearOrder(): string[] {
+  return Object.keys(DEPENDENCY_LEVELS)
+    .sort((a, b) => Number(b) - Number(a))
+    .flatMap(level => DEPENDENCY_LEVELS[Number(level)]);
+}
+
+export function getModuleLevel(moduleKey: string): number {
+  for (const [level, modules] of Object.entries(DEPENDENCY_LEVELS)) {
+    if (modules.includes(moduleKey)) {
+      return Number(level);
+    }
+  }
+  return -1;
+}
 
 // ============================================================
 // SINGLE MODULE SEED
@@ -270,7 +304,7 @@ export const seedPreset = mutation({
     // Manually implement bulkseed logic here
     try {
       const modules = configs.map(c => c.module);
-      const orderedModules = resolveDependencies(modules);
+      const orderedModules = getSeedOrder().filter(moduleKey => modules.includes(moduleKey));
       
       const results: SeedResult[] = [];
       
@@ -297,6 +331,43 @@ export const seedPreset = mutation({
     }
   },
   returns: v.array(v.any()),
+});
+
+// ============================================================
+// DEPENDENCY TREE
+// ============================================================
+
+export const getDependencyTree = query({
+  args: {},
+  handler: async (ctx) => {
+    const result: Record<string, Array<{ key: string; count: number; isApproximate: boolean }>> = {};
+
+    for (const [level, modules] of Object.entries(DEPENDENCY_LEVELS)) {
+      result[level] = await Promise.all(
+        modules.map(async (moduleKey) => {
+          const tableName = getTableName(moduleKey) as keyof DataModel;
+          const records = await ctx.db.query(tableName).take(1001);
+          return {
+            count: records.length > 1000 ? 1000 : records.length,
+            isApproximate: records.length > 1000,
+            key: moduleKey,
+          };
+        })
+      );
+    }
+
+    return result;
+  },
+  returns: v.record(
+    v.string(),
+    v.array(
+      v.object({
+        count: v.number(),
+        isApproximate: v.boolean(),
+        key: v.string(),
+      })
+    )
+  ),
 });
 
 // ============================================================
@@ -420,7 +491,10 @@ export const clearAll = mutation({
       return SEED_MODULE_METADATA[moduleKey]?.category !== 'system';
     });
 
-    for (const moduleKey of moduleKeys) {
+    const orderedModules = getClearOrder().filter((moduleKey) => moduleKeys.includes(moduleKey));
+    console.log(`[SeedManager] Clear order: ${orderedModules.join(' → ')}`);
+
+    for (const moduleKey of orderedModules) {
       const SeederClass = SEEDERS[moduleKey];
       if (!SeederClass) {
         continue;

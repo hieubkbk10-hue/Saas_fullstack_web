@@ -21,5 +21,5 @@
  
    conventionNote: 'Settings lưu dạng key-value với group. Module này là isCore: true - không thể tắt.',
  
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

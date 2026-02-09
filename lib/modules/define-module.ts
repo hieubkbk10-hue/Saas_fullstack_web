@@ -35,7 +35,7 @@ export interface ModuleSettingGroup {
    settings?: ModuleSetting[];
   settingGroups?: ModuleSettingGroup[];
    conventionNote?: string;
-   tabs?: ('config' | 'data' | 'appearance')[];
+  tabs?: ('config' | 'appearance')[];
  }
  
  const COUNT_FEATURES = ['likes', 'views', 'shares', 'comments'];
@@ -60,6 +60,6 @@ export interface ModuleSettingGroup {
    return {
      ...config,
      features,
-     tabs: config.tabs ?? ['config', 'data'],
+    tabs: config.tabs ?? ['config'],
    };
  }

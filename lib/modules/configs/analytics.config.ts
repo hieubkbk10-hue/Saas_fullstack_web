@@ -34,5 +34,5 @@
  
    conventionNote: 'Dữ liệu thống kê được cache và refresh định kỳ theo refreshInterval. Hỗ trợ export CSV/Excel/PDF.',
  
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

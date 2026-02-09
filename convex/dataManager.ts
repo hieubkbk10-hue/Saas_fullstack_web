@@ -1,5 +1,8 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { listSeedableModuleKeys } from "./seeders";
+import type { TableNames } from "./_generated/dataModel";
+import { SEED_MODULE_METADATA } from "../lib/modules/seed-registry";
 
 // ============================================================
 // DATA MANAGER - Quản lý clear data cho hệ thống
@@ -11,39 +14,29 @@ import { v } from "convex/values";
 const MAX_COUNT_LIMIT = 1000; // Max records to count (show "1000+" if exceeded)
 const BATCH_DELETE_LIMIT = 500; // Records per delete batch to avoid timeout
 
-// Danh sách các bảng trong hệ thống
-const ALL_TABLES = [
-  "adminModules",
-  "moduleFields", 
+const EXTRA_TABLES: TableNames[] = [
+  "moduleFields",
   "moduleFeatures",
   "moduleSettings",
-  "systemPresets",
   "convexDashboard",
-  "users",
-  "roles",
-  "customers",
-  "productCategories",
-  "products",
-  "postCategories",
-  "posts",
-  "comments",
-  "images",
-  "menus",
+  "activityLogs",
   "menuItems",
   "homeComponents",
-  "settings",
-  "activityLogs",
-] as const;
+  "images",
+] as TableNames[];
 
-type TableName = typeof ALL_TABLES[number];
+// Danh sách các bảng trong hệ thống
+const ALL_TABLES = Array.from(new Set([
+  ...listSeedableModuleKeys(),
+  ...EXTRA_TABLES,
+])) as TableNames[];
+
+type TableName = TableNames;
 
 // === TABLE CATEGORIES ===
 const TABLE_CATEGORIES: Record<string, string> = {
   activityLogs: "logs",
-  adminModules: "system",
-  comments: "content",
   convexDashboard: "system",
-  customers: "user",
   homeComponents: "website",
   images: "media",
   menuItems: "website",
@@ -51,17 +44,17 @@ const TABLE_CATEGORIES: Record<string, string> = {
   moduleFeatures: "system",
   moduleFields: "system",
   moduleSettings: "system",
-  postCategories: "content",
-  posts: "content",
-  productCategories: "commerce",
-  products: "commerce",
-  roles: "user",
-  settings: "config",
-  systemPresets: "system",
-  users: "user",
 };
 
-const SYSTEM_TABLES = new Set(["adminModules", "moduleFields", "moduleFeatures", "moduleSettings", "systemPresets", "convexDashboard"]);
+const SYSTEM_TABLES = new Set([
+  ...Object.entries(SEED_MODULE_METADATA)
+    .filter(([, meta]) => meta.category === "system")
+    .map(([key]) => key),
+  "moduleFields",
+  "moduleFeatures",
+  "moduleSettings",
+  "convexDashboard",
+]);
 
 // ============================================================
 // QUERIES - Đếm số lượng records trong các bảng
@@ -73,8 +66,9 @@ export const getTableStats = query({
     const results = await Promise.all(
       ALL_TABLES.map(async (table) => {
         const records = await ctx.db.query(table).take(MAX_COUNT_LIMIT);
+        const metadataCategory = SEED_MODULE_METADATA[table]?.category;
         return {
-          category: TABLE_CATEGORIES[table] || "other",
+          category: metadataCategory || TABLE_CATEGORIES[table] || "other",
           count: records.length,
           isApproximate: records.length === MAX_COUNT_LIMIT,
           table,

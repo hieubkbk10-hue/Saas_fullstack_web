@@ -1,12 +1,8 @@
  'use client';
  
- import React, { useState } from 'react';
- import { useMutation } from 'convex/react';
- import { api } from '@/convex/_generated/api';
- import { toast } from 'sonner';
- import { Database, Settings, Palette, Trash2, RefreshCw, Loader2, FolderTree } from 'lucide-react';
+import React, { useState } from 'react';
+import { Settings, Palette, Loader2, FolderTree } from 'lucide-react';
 import type { ModuleDefinition } from '@/lib/modules/define-module';
-import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
 import type { FieldConfig } from '@/types/module-config';
  import { useModuleConfig } from '@/lib/modules/hooks/useModuleConfig';
  import { 
@@ -22,9 +18,9 @@ import type { FieldConfig } from '@/types/module-config';
    FieldsCard,
  } from '@/components/modules/shared';
 import { VariantSettingsSection } from '@/components/modules/products/VariantSettingsSection';
- import { Card, Button, cn } from '@/app/admin/components/ui';
+import { Card, cn } from '@/app/admin/components/ui';
  
- type TabType = 'config' | 'data' | 'appearance';
+type TabType = 'config' | 'appearance';
  
 export interface ModuleConfigPageRenderProps {
   config: ModuleDefinition;
@@ -49,7 +45,6 @@ export interface ModuleConfigTabRenderProps {
 
  interface ModuleConfigPageProps {
    config: ModuleDefinition;
-  renderDataTab?: (props: ModuleConfigPageRenderProps) => React.ReactNode;
   renderAppearanceTab?: (props: ModuleConfigPageRenderProps) => React.ReactNode;
   renderConfigTab?: (props: ModuleConfigTabRenderProps) => React.ReactNode;
   onAppearanceSave?: () => Promise<void>;
@@ -58,7 +53,6 @@ export interface ModuleConfigTabRenderProps {
  
 export function ModuleConfigPage({ 
   config, 
-  renderDataTab, 
   renderAppearanceTab,
   renderConfigTab,
   onAppearanceSave,
@@ -84,7 +78,7 @@ export function ModuleConfigPage({
    } = useModuleConfig(config);
    
    const colorClasses = getColorClasses(config.color);
-   const tabs = config.tabs ?? ['config', 'data'];
+   const tabs = config.tabs ?? ['config'];
   
   const renderProps: ModuleConfigPageRenderProps = {
     config,
@@ -150,15 +144,6 @@ export function ModuleConfigPage({
                colorClass={colorClasses.tab}
              />
            )}
-           {tabs.includes('data') && (
-             <TabButton
-               active={activeTab === 'data'}
-               onClick={() => setActiveTab('data')}
-               icon={Database}
-               label="Dữ liệu"
-               colorClass={colorClasses.tab}
-             />
-           )}
            {tabs.includes('appearance') && (
              <TabButton
                active={activeTab === 'appearance'}
@@ -187,10 +172,6 @@ export function ModuleConfigPage({
              onSettingChange={handleSettingChange}
            />
          )
-       )}
-       
-       {activeTab === 'data' && (
-        renderDataTab ? renderDataTab(renderProps) : <DataTab config={config} colorClasses={colorClasses} />
        )}
        
        {activeTab === 'appearance' && (
@@ -392,128 +373,6 @@ function ConfigTab({ config, moduleData, localFeatures, localFields, localCatego
          </ConventionNote>
        )}
      </>
-   );
- }
- 
- function DataTab({ config, colorClasses }: {
-   config: ModuleDefinition;
-   colorClasses: ReturnType<typeof getColorClasses>;
- }) {
-   const [isSeeding, setIsSeeding] = useState(false);
-   const [isClearing, setIsClearing] = useState(false);
-   
-  const moduleKey = config.key;
-  const seedInfo = getSeedModuleInfo(moduleKey);
-  const isSeedable = Boolean(seedInfo);
-  const seedModule = useMutation(api.seedManager.seedModule);
-  const clearData = useMutation(api.seedManager.clearModule);
-   
-   const handleSeed = async () => {
-    if (!seedInfo) {
-      toast.error(`Module ${moduleKey} chưa hỗ trợ seed`);
-       return;
-     }
-     setIsSeeding(true);
-     try {
-      await seedModule({
-        module: moduleKey,
-        quantity: seedInfo.defaultQuantity,
-      });
-       toast.success('Đã tạo dữ liệu mẫu!');
-     } catch (error) {
-       toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
-     } finally {
-       setIsSeeding(false);
-     }
-   };
-   
-   const handleClear = async () => {
-    if (!seedInfo) {
-      toast.error(`Module ${moduleKey} chưa hỗ trợ clear`);
-       return;
-     }
-     if (!confirm('Bạn có chắc muốn xóa toàn bộ dữ liệu?')) return;
-     setIsClearing(true);
-     try {
-      await clearData({ module: moduleKey });
-       toast.success('Đã xóa dữ liệu!');
-     } catch (error) {
-       toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
-     } finally {
-       setIsClearing(false);
-     }
-   };
-   
-   const handleReset = async () => {
-    if (!seedInfo) {
-      toast.error(`Module ${moduleKey} chưa hỗ trợ reset`);
-       return;
-     }
-     if (!confirm('Bạn có chắc muốn reset dữ liệu về mặc định?')) return;
-     setIsClearing(true);
-     try {
-      await clearData({ module: moduleKey });
-      await seedModule({
-        force: true,
-        module: moduleKey,
-        quantity: seedInfo.defaultQuantity,
-      });
-       toast.success('Đã reset dữ liệu!');
-     } catch (error) {
-       toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
-     } finally {
-       setIsClearing(false);
-     }
-   };
-   
-   return (
-     <div className="space-y-6">
-       <Card className="p-4">
-         <div className="flex items-center justify-between">
-           <div>
-             <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-               Quản lý dữ liệu mẫu
-             </h3>
-             <p className="text-sm text-slate-500 mt-1">
-               Seed, clear hoặc reset dữ liệu module
-             </p>
-           </div>
-           <div className="flex gap-2">
-             <Button 
-               variant="outline" 
-               onClick={handleSeed}
-               disabled={isSeeding || !isSeedable}
-               className="gap-2"
-             >
-               {isSeeding ? <Loader2 size={16} className="animate-spin" /> : <Database size={16} />}
-               Seed Data
-             </Button>
-             <Button 
-               variant="outline" 
-               onClick={handleClear}
-               disabled={isClearing || !isSeedable}
-               className="gap-2 text-red-500 hover:text-red-600"
-             >
-               {isClearing ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-               Clear All
-             </Button>
-             <Button 
-               onClick={handleReset}
-               disabled={isClearing || isSeeding || !isSeedable}
-               className={cn("gap-2", colorClasses.button, "text-white")}
-             >
-               <RefreshCw size={16} />
-               Reset
-             </Button>
-           </div>
-         </div>
-       </Card>
-       
-       <Card className="p-8 text-center text-slate-500">
-         <Database size={48} className="mx-auto mb-4 opacity-50" />
-         <p>Thống kê và preview dữ liệu sẽ hiển thị ở đây</p>
-       </Card>
-     </div>
    );
  }
  

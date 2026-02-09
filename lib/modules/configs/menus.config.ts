@@ -32,5 +32,5 @@
    
    conventionNote: 'location: header, footer, sidebar. order tự động increment. parentId null = root item.',
    
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

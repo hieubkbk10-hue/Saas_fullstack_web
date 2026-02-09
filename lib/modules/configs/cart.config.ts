@@ -21,5 +21,5 @@ export const cartModule = defineModule({
 
   conventionNote: 'Giỏ hàng phụ thuộc module Sản phẩm. Chỉ hỗ trợ khách đã đăng nhập. Giá lưu tại thời điểm thêm vào giỏ. Trạng thái: Active, Converted, Abandoned.',
 
-  tabs: ['config', 'data'],
+  tabs: ['config'],
 });

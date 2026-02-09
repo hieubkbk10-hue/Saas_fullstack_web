@@ -1,1 +1,0 @@
- export { WishlistDataTab } from './WishlistDataTab';

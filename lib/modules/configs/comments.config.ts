@@ -29,5 +29,5 @@
    
    conventionNote: 'Trường targetType xác định loại (post/product). status: Pending, Approved, Spam. Bình luận hỗ trợ polymorphic relationship.',
    
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

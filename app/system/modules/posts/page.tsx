@@ -3,7 +3,7 @@
  import React, { useRef, useState, useCallback } from 'react';
  import { ModuleConfigPage } from '@/components/modules/ModuleConfigPage';
  import { postsModule } from '@/lib/modules/configs/posts.config';
- import { PostsDataTab, PostsAppearanceTab } from '@/components/modules/posts';
+import { PostsAppearanceTab } from '@/components/modules/posts/PostsAppearanceTab';
 
 export default function PostsModuleConfigPage() {
   const [appearanceHasChanges, setAppearanceHasChanges] = useState(false);
@@ -18,9 +18,6 @@ export default function PostsModuleConfigPage() {
   return (
     <ModuleConfigPage 
       config={postsModule}
-      renderDataTab={({ colorClasses }) => (
-        <PostsDataTab colorClasses={colorClasses} />
-      )}
       renderAppearanceTab={() => (
         <PostsAppearanceTab 
           onHasChanges={setAppearanceHasChanges}

@@ -1,1 +1,0 @@
- export { SettingsDataTab } from './SettingsDataTab';

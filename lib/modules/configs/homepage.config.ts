@@ -37,5 +37,5 @@
    
    conventionNote: 'type: hero, about, products, posts, partners, contact. config lưu JSON tùy chỉnh cho từng section.',
    
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

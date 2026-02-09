@@ -124,5 +124,5 @@ import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS } from '@/lib/orders/
    
    conventionNote: 'orderNumber tự động generate. status theo cấu hình module. totalAmount tính tự động.',
    
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

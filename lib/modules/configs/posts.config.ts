@@ -31,5 +31,5 @@
    
    conventionNote: 'Slug tự động từ tiêu đề. Trường order và active bắt buộc.',
    
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

@@ -108,5 +108,5 @@ export const productsModule = defineModule({
 
    conventionNote: 'Slug tự động từ tên. SKU phải unique. Trường price và status bắt buộc.',
 
-   tabs: ['config', 'data'],
+  tabs: ['config'],
 });

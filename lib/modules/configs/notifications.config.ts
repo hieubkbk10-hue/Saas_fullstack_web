@@ -20,5 +20,5 @@
  
    conventionNote: 'type: info, success, warning, error. targetType: all, customers, users, specific. status: Draft, Scheduled, Sent, Cancelled.',
  
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

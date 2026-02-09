@@ -21,5 +21,5 @@
    
    conventionNote: 'Role key là unique và lowercase. permissions là array string. isSystem = true không thể xóa.',
    
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

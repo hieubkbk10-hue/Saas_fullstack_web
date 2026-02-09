@@ -1,1 +1,0 @@
- export { OrdersDataTab } from './OrdersDataTab';

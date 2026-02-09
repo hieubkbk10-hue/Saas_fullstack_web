@@ -21,5 +21,5 @@
  
    conventionNote: 'File lưu trên Convex Storage. Size tính bằng bytes. Hỗ trợ image, video, pdf.',
  
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

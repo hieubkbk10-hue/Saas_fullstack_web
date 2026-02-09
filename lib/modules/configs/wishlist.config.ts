@@ -20,5 +20,5 @@
    
    conventionNote: 'Wishlist phụ thuộc module Sản phẩm. Mỗi cặp customerId + productId là unique.',
    
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

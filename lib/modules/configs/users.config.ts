@@ -22,5 +22,5 @@
    
    conventionNote: 'Email unique. Mỗi user gán 1 role. Password hash bcrypt. lastLogin tự động update.',
    
-   tabs: ['config', 'data'],
+  tabs: ['config'],
  });

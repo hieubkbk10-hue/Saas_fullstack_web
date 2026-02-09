@@ -1,1 +1,0 @@
- export { MediaDataTab } from './MediaDataTab';
