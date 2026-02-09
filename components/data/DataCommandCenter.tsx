@@ -23,7 +23,7 @@ export function DataCommandCenter() {
   const seedModule = useMutation(api.seedManager.seedModule);
   const clearModule = useMutation(api.seedManager.clearModule);
   const clearAll = useMutation(api.seedManager.clearAll);
-  const factoryReset = useMutation(api.seedManager.factoryReset);
+  const factoryResetStep = useMutation(api.seedManager.factoryResetStep);
 
   const [seedingModule, setSeedingModule] = useState<string | null>(null);
   const [clearingModule, setClearingModule] = useState<string | null>(null);
@@ -94,7 +94,19 @@ export function DataCommandCenter() {
   const handleFactoryReset = async () => {
     setIsFactoryResetting(true);
     try {
-      await factoryReset({});
+      let nextIndex: number | null = 0;
+      let guard = 0;
+      while (nextIndex !== null) {
+        const result = await factoryResetStep({ tableIndex: nextIndex });
+        if (result.completed) {
+          break;
+        }
+        nextIndex = result.nextIndex;
+        guard += 1;
+        if (guard > 10000) {
+          throw new Error('Factory reset vượt quá giới hạn an toàn');
+        }
+      }
       toast.success('Đã xóa sạch toàn bộ dữ liệu');
       return true;
     } catch (error) {

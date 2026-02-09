@@ -510,9 +510,11 @@ export const clearAll = mutation({
   }),
 });
 
-export const factoryReset = mutation({
-  args: {},
-  handler: async (ctx) => {
+export const factoryResetStep = mutation({
+  args: {
+    tableIndex: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
     const tables: TableNames[] = [
       'adminModules',
       'moduleFields',
@@ -564,19 +566,30 @@ export const factoryReset = mutation({
       'seedProgress',
     ];
 
-    for (const table of [...tables].reverse()) {
-      let hasMore = true;
-      while (hasMore) {
-        const records = await ctx.db.query(table).take(500);
-        await Promise.all(records.map((record) => ctx.db.delete(record._id)));
-        hasMore = records.length === 500;
-      }
+    const orderedTables = [...tables].reverse();
+
+    const batchSize = 100;
+    const index = args.tableIndex ?? 0;
+
+    if (index >= orderedTables.length) {
+      return { completed: true, deleted: 0, nextIndex: null, table: null };
     }
 
-    return { success: true };
+    const table = orderedTables[index];
+    const records = await ctx.db.query(table).take(batchSize);
+    await Promise.all(records.map((record) => ctx.db.delete(record._id)));
+
+    if (records.length === batchSize) {
+      return { completed: false, deleted: records.length, nextIndex: index, table };
+    }
+
+    return { completed: false, deleted: records.length, nextIndex: index + 1, table };
   },
   returns: v.object({
-    success: v.boolean(),
+    completed: v.boolean(),
+    deleted: v.number(),
+    nextIndex: v.union(v.number(), v.null()),
+    table: v.union(v.string(), v.null()),
   }),
 });
 
