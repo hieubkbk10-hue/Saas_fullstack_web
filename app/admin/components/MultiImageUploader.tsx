@@ -307,30 +307,29 @@ export function MultiImageUploader<T extends ImageItem>({
 
   // File drag handlers for individual items
   const handleItemFileDragEnter = useCallback((e: React.DragEvent, itemId: string | number) => {
+    if (!e.dataTransfer.types.includes('Files')) {return;}
     e.preventDefault();
     e.stopPropagation();
-    // Only trigger if dragging files, not dragging items for reorder
-    if (e.dataTransfer.types.includes('Files')) {
-      setFileDragOverItemId(itemId);
-    }
+    setFileDragOverItemId(itemId);
   }, []);
 
   const handleItemFileDragLeave = useCallback((e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes('Files')) {return;}
     e.preventDefault();
     e.stopPropagation();
     setFileDragOverItemId(null);
   }, []);
 
   const handleItemFileDragOver = useCallback((e: React.DragEvent, itemId: string | number) => {
+    if (!e.dataTransfer.types.includes('Files')) {return;}
     e.preventDefault();
     e.stopPropagation();
-    if (e.dataTransfer.types.includes('Files')) {
-      e.dataTransfer.dropEffect = 'copy';
-      setFileDragOverItemId(itemId);
-    }
+    e.dataTransfer.dropEffect = 'copy';
+    setFileDragOverItemId(itemId);
   }, []);
 
   const handleItemFileDrop = useCallback((e: React.DragEvent, itemId: string | number) => {
+    if (!e.dataTransfer.types.includes('Files')) {return;}
     e.preventDefault();
     e.stopPropagation();
     setFileDragOverItemId(null);
