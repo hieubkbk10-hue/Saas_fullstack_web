@@ -147,14 +147,14 @@ export function CartDrawer() {
                 >
                   Xem giỏ hàng
                 </Link>
-                <button
-                  type="button"
-                  className="py-2 rounded-lg text-white text-sm font-semibold"
+                <Link
+                  href="/checkout?fromCart=true"
+                  onClick={closeDrawer}
+                  className={`py-2 rounded-lg text-white text-sm font-semibold text-center ${items.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
                   style={{ backgroundColor: brandColor }}
-                  disabled={items.length === 0}
                 >
                   Thanh toán
-                </button>
+                </Link>
               </div>
             </div>
           </>
