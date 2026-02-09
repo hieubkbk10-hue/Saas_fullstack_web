@@ -40,6 +40,7 @@ export class OrderSeeder extends BaseSeeder<OrderData> {
   }
   
   async seed(config: SeedConfig) {
+    const startTime = Date.now();
     // Load dependencies
     [this.products, this.customers] = await Promise.all([
       this.ctx.db.query('products').collect(),
@@ -47,10 +48,24 @@ export class OrderSeeder extends BaseSeeder<OrderData> {
     ]);
     
     if (this.products.length < 5) {
-      throw new Error('Need at least 5 products. Seed products first.');
+      console.log('[OrderSeeder] Skipped: need at least 5 products');
+      return {
+        created: 0,
+        dependencies: ['products', 'customers'],
+        duration: Date.now() - startTime,
+        module: this.moduleName,
+        skipped: 0,
+      };
     }
     if (this.customers.length === 0) {
-      throw new Error('No customers found. Seed customers first.');
+      console.log('[OrderSeeder] Skipped: no customers found');
+      return {
+        created: 0,
+        dependencies: ['products', 'customers'],
+        duration: Date.now() - startTime,
+        module: this.moduleName,
+        skipped: 0,
+      };
     }
     
     console.log(`[OrderSeeder] Found ${this.products.length} products, ${this.customers.length} customers`);

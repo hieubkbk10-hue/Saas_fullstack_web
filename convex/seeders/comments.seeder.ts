@@ -30,6 +30,7 @@ export class CommentsSeeder extends BaseSeeder<CommentData> {
   }
 
   async seed(config: SeedConfig) {
+    const startTime = Date.now();
     await this.seedModuleConfig();
     const [posts, products, services, customers] = await Promise.all([
       this.ctx.db.query('posts').collect(),
@@ -46,7 +47,14 @@ export class CommentsSeeder extends BaseSeeder<CommentData> {
     this.customers = customers;
 
     if (this.targets.length === 0) {
-      throw new Error('No targets found for comments. Seed posts/products/services first.');
+      console.log('[CommentsSeeder] Skipped: no targets found');
+      return {
+        created: 0,
+        dependencies: ['posts', 'products', 'services'],
+        duration: Date.now() - startTime,
+        module: this.moduleName,
+        skipped: 0,
+      };
     }
 
     return super.seed(config);

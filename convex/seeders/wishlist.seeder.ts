@@ -25,6 +25,7 @@ export class WishlistSeeder extends BaseSeeder<WishlistData> {
   }
 
   async seed(config: SeedConfig) {
+    const startTime = Date.now();
     [this.products, this.customers, this.variants] = await Promise.all([
       this.ctx.db.query('products').collect(),
       this.ctx.db.query('customers').collect(),
@@ -32,7 +33,14 @@ export class WishlistSeeder extends BaseSeeder<WishlistData> {
     ]);
 
     if (this.products.length === 0 || this.customers.length === 0) {
-      throw new Error('Missing products or customers for wishlist seeding.');
+      console.log('[WishlistSeeder] Skipped: missing products or customers');
+      return {
+        created: 0,
+        dependencies: ['products', 'customers'],
+        duration: Date.now() - startTime,
+        module: this.moduleName,
+        skipped: 0,
+      };
     }
 
     return super.seed(config);
