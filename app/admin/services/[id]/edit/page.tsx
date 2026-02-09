@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Briefcase, Loader2, Plus } from 'lucide-react';
+import { Briefcase, ExternalLink, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { LexicalEditor } from '../../../components/LexicalEditor';
@@ -143,6 +143,17 @@ export default function ServiceEditPage({ params }: { params: Promise<{ id: stri
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chỉnh sửa dịch vụ</h1>
              <div className="text-sm text-slate-500 mt-1">Cập nhật thông tin dịch vụ</div>
           </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => window.open(`/services/${slug}`, '_blank')}
+            className="gap-2"
+          >
+            <ExternalLink size={16} />
+            Xem trên web
+          </Button>
         </div>
       </div>
       

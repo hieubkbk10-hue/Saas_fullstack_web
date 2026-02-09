@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Loader2, Plus } from 'lucide-react';
+import { ExternalLink, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { LexicalEditor } from '../../../components/LexicalEditor';
@@ -134,6 +134,17 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chỉnh sửa bài viết</h1>
           <div className="text-sm text-slate-500 mt-1">Cập nhật nội dung bài viết hiện có</div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => window.open(`/posts/${slug}`, '_blank')}
+            className="gap-2"
+          >
+            <ExternalLink size={16} />
+            Xem trên web
+          </Button>
         </div>
       </div>
       
