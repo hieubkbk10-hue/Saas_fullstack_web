@@ -24,6 +24,24 @@ export function DataCommandCenter() {
   const clearModule = useMutation(api.seedManager.clearModule);
   const clearAll = useMutation(api.seedManager.clearAll);
   const factoryResetStep = useMutation(api.seedManager.factoryResetStep);
+  const seedAll = useMutation(api.seed.seedAll);
+  const seedAnalyticsModule = useMutation(api.seed.seedAnalyticsModule);
+  const seedPostsModule = useMutation(api.seed.seedPostsModule);
+  const seedProductsModule = useMutation(api.seed.seedProductsModule);
+  const seedCommentsModule = useMutation(api.seed.seedCommentsModule);
+  const seedOrdersModule = useMutation(api.seed.seedOrdersModule);
+  const seedMediaModule = useMutation(api.seed.seedMediaModule);
+  const seedCustomersModule = useMutation(api.seed.seedCustomersModule);
+  const seedWishlistModule = useMutation(api.seed.seedWishlistModule);
+  const seedCartModule = useMutation(api.seed.seedCartModule);
+  const seedUsersModule = useMutation(api.seed.seedUsersModule);
+  const seedRolesModule = useMutation(api.seed.seedRolesModule);
+  const seedSettingsModule = useMutation(api.seed.seedSettingsModule);
+  const seedMenusModule = useMutation(api.seed.seedMenusModule);
+  const seedHomepageModule = useMutation(api.seed.seedHomepageModule);
+  const seedNotificationsModule = useMutation(api.seed.seedNotificationsModule);
+  const seedPromotionsModule = useMutation(api.seed.seedPromotionsModule);
+  const seedServicesModule = useMutation(api.seed.seedServicesModule);
 
   const [seedingModule, setSeedingModule] = useState<string | null>(null);
   const [clearingModule, setClearingModule] = useState<string | null>(null);
@@ -33,6 +51,7 @@ export function DataCommandCenter() {
   const [currentPreset, setCurrentPreset] = useState<string | null>(null);
   const [showCustomDialog, setShowCustomDialog] = useState(false);
   const [showFactoryResetDialog, setShowFactoryResetDialog] = useState(false);
+  const [resetProgress, setResetProgress] = useState<null | { current: number; label: string; total: number }>(null);
 
   const stats = useMemo(() => {
     const totalTables = tableStats?.length ?? 0;
@@ -98,6 +117,12 @@ export function DataCommandCenter() {
       let guard = 0;
       while (nextIndex !== null) {
         const result = await factoryResetStep({ tableIndex: nextIndex });
+        const progressLabel = result.table ? `Đang xóa: ${result.table}` : 'Đang hoàn tất';
+        setResetProgress({
+          current: Math.min(result.currentIndex, result.totalTables),
+          label: progressLabel,
+          total: result.totalTables,
+        });
         if (result.completed) {
           break;
         }
@@ -107,6 +132,38 @@ export function DataCommandCenter() {
           throw new Error('Factory reset vượt quá giới hạn an toàn');
         }
       }
+
+      const moduleConfigSeeders = [
+        { label: 'Core system', run: seedAll },
+        { label: 'Analytics', run: seedAnalyticsModule },
+        { label: 'Posts', run: seedPostsModule },
+        { label: 'Products', run: seedProductsModule },
+        { label: 'Comments', run: seedCommentsModule },
+        { label: 'Orders', run: seedOrdersModule },
+        { label: 'Media', run: seedMediaModule },
+        { label: 'Customers', run: seedCustomersModule },
+        { label: 'Wishlist', run: seedWishlistModule },
+        { label: 'Cart', run: seedCartModule },
+        { label: 'Users', run: seedUsersModule },
+        { label: 'Roles', run: seedRolesModule },
+        { label: 'Settings', run: seedSettingsModule },
+        { label: 'Menus', run: seedMenusModule },
+        { label: 'Homepage', run: seedHomepageModule },
+        { label: 'Notifications', run: seedNotificationsModule },
+        { label: 'Promotions', run: seedPromotionsModule },
+        { label: 'Services', run: seedServicesModule },
+      ];
+
+      for (let index = 0; index < moduleConfigSeeders.length; index += 1) {
+        const step = moduleConfigSeeders[index];
+        setResetProgress({
+          current: index + 1,
+          label: `Khởi tạo cấu hình: ${step.label}`,
+          total: moduleConfigSeeders.length,
+        });
+        await step.run({});
+      }
+
       toast.success('Đã xóa sạch toàn bộ dữ liệu');
       return true;
     } catch (error) {
@@ -114,6 +171,7 @@ export function DataCommandCenter() {
       return false;
     } finally {
       setIsFactoryResetting(false);
+      setResetProgress(null);
     }
   };
 
@@ -216,6 +274,7 @@ export function DataCommandCenter() {
         onOpenChange={setShowFactoryResetDialog}
         onConfirm={handleFactoryReset}
         isLoading={isFactoryResetting}
+        progress={resetProgress}
       />
     </div>
   );

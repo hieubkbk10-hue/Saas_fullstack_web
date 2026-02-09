@@ -16,9 +16,20 @@ interface FactoryResetDialogProps {
   onOpenChange: (open: boolean) => void;
   onConfirm: () => Promise<boolean>;
   isLoading: boolean;
+  progress: null | {
+    current: number;
+    label: string;
+    total: number;
+  };
 }
 
-export function FactoryResetDialog({ open, onOpenChange, onConfirm, isLoading }: FactoryResetDialogProps) {
+export function FactoryResetDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+  isLoading,
+  progress,
+}: FactoryResetDialogProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [confirmText, setConfirmText] = useState('');
 
@@ -69,6 +80,23 @@ export function FactoryResetDialog({ open, onOpenChange, onConfirm, isLoading }:
               className="uppercase"
               disabled={isLoading}
             />
+          </div>
+        )}
+
+        {progress && (
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 p-3 text-sm">
+            <p className="text-xs uppercase text-slate-500">Tiến trình</p>
+            <p className="mt-1 text-slate-700 dark:text-slate-200">{progress.label}</p>
+            <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+              <span>{progress.current}/{progress.total}</span>
+              <span>{Math.round((progress.current / Math.max(progress.total, 1)) * 100)}%</span>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-slate-200 dark:bg-slate-800">
+              <div
+                className="h-2 rounded-full bg-rose-500 transition-all"
+                style={{ width: `${Math.min(100, (progress.current / Math.max(progress.total, 1)) * 100)}%` }}
+              />
+            </div>
           </div>
         )}
 

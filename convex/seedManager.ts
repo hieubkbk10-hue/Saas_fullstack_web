@@ -571,8 +571,17 @@ export const factoryResetStep = mutation({
     const batchSize = 100;
     const index = args.tableIndex ?? 0;
 
-    if (index >= orderedTables.length) {
-      return { completed: true, deleted: 0, nextIndex: null, table: null };
+    const totalTables = orderedTables.length;
+
+    if (index >= totalTables) {
+      return {
+        completed: true,
+        currentIndex: totalTables,
+        deleted: 0,
+        nextIndex: null,
+        table: null,
+        totalTables,
+      };
     }
 
     const table = orderedTables[index];
@@ -580,16 +589,32 @@ export const factoryResetStep = mutation({
     await Promise.all(records.map((record) => ctx.db.delete(record._id)));
 
     if (records.length === batchSize) {
-      return { completed: false, deleted: records.length, nextIndex: index, table };
+      return {
+        completed: false,
+        currentIndex: index + 1,
+        deleted: records.length,
+        nextIndex: index,
+        table,
+        totalTables,
+      };
     }
 
-    return { completed: false, deleted: records.length, nextIndex: index + 1, table };
+    return {
+      completed: false,
+      currentIndex: index + 1,
+      deleted: records.length,
+      nextIndex: index + 1,
+      table,
+      totalTables,
+    };
   },
   returns: v.object({
     completed: v.boolean(),
+    currentIndex: v.number(),
     deleted: v.number(),
     nextIndex: v.union(v.number(), v.null()),
     table: v.union(v.string(), v.null()),
+    totalTables: v.number(),
   }),
 });
 
