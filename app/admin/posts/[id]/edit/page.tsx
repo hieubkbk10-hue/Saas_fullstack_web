@@ -84,7 +84,10 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
     setIsSubmitting(true);
     try {
       const resolvedMetaTitle = truncateText(title.trim(), 60);
-      const resolvedMetaDescription = truncateText(stripHtml(excerpt || content || ''), 160);
+      const resolvedMetaDescription = truncateText(
+        stripHtml(enabledFields.has('excerpt') && excerpt ? excerpt : content || ''),
+        160
+      );
       await updatePost({
         authorName: enabledFields.has('author_name') ? authorName.trim() || undefined : undefined,
         categoryId: categoryId as Id<"postCategories">,

@@ -99,7 +99,14 @@ export function DataCommandCenter() {
       let nextIndex: number | null = 0;
       let guard = 0;
       while (nextIndex !== null) {
-        const result = await factoryResetStep({ tableIndex: nextIndex });
+        const result: {
+          completed: boolean;
+          currentIndex: number;
+          deleted: number;
+          nextIndex: number | null;
+          table: string | null;
+          totalTables: number;
+        } = await factoryResetStep({ tableIndex: nextIndex });
         const progressLabel = result.table ? `Đang xóa: ${result.table}` : 'Đang hoàn tất';
         setResetProgress({
           current: Math.min(result.currentIndex, result.totalTables),

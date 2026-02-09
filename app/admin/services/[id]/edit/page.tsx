@@ -86,7 +86,10 @@ export default function ServiceEditPage({ params }: { params: Promise<{ id: stri
     setIsSubmitting(true);
     try {
       const resolvedMetaTitle = truncateText(title.trim(), 60);
-      const resolvedMetaDescription = truncateText(stripHtml(excerpt || content || ''), 160);
+      const resolvedMetaDescription = truncateText(
+        stripHtml(enabledFields.has('excerpt') && excerpt ? excerpt : content || ''),
+        160
+      );
       await updateService({
         categoryId: categoryId as Id<"serviceCategories">,
         content,
