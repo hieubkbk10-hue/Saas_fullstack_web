@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Loader2 } from 'lucide-react';
+import { ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { LexicalEditor } from '../../../components/LexicalEditor';
@@ -192,11 +192,22 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chỉnh sửa sản phẩm</h1>
           <Link href="/admin/products" className="text-sm text-orange-600 hover:underline">Quay lại danh sách</Link>
         </div>
-        {variantEnabled && hasVariants && (
-          <Link href={`/admin/products/${id}/variants`}>
-            <Button variant="outline">Quản lý phiên bản</Button>
-          </Link>
-        )}
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => window.open(`/products/${slug}`, '_blank')}
+            className="gap-2"
+          >
+            <ExternalLink size={16} />
+            Xem trên web
+          </Button>
+          {variantEnabled && hasVariants && (
+            <Link href={`/admin/products/${id}/variants`}>
+              <Button variant="outline">Quản lý phiên bản</Button>
+            </Link>
+          )}
+        </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
