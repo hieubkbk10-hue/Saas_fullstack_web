@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import {
   Button,
@@ -33,12 +33,13 @@ export function FactoryResetDialog({
   const [step, setStep] = useState<1 | 2>(1);
   const [confirmText, setConfirmText] = useState('');
 
-  useEffect(() => {
-    if (!open) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
       setStep(1);
       setConfirmText('');
     }
-  }, [open]);
+    onOpenChange(nextOpen);
+  };
 
   const isValidConfirm = useMemo(() => {
     return confirmText.trim().toLowerCase() === 'chac chan';
@@ -47,12 +48,12 @@ export function FactoryResetDialog({
   const handleConfirm = async () => {
     const success = await onConfirm();
     if (success) {
-      onOpenChange(false);
+      handleOpenChange(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-rose-600">
@@ -104,7 +105,7 @@ export function FactoryResetDialog({
           <Button
             type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
             disabled={isLoading}
           >
             Hủy

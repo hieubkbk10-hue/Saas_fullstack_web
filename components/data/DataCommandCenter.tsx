@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { AlertTriangle, Database } from 'lucide-react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
@@ -24,24 +24,7 @@ export function DataCommandCenter() {
   const clearModule = useMutation(api.seedManager.clearModule);
   const clearAll = useMutation(api.seedManager.clearAll);
   const factoryResetStep = useMutation(api.seedManager.factoryResetStep);
-  const seedAll = useMutation(api.seed.seedAll);
-  const seedAnalyticsModule = useMutation(api.seed.seedAnalyticsModule);
-  const seedPostsModule = useMutation(api.seed.seedPostsModule);
-  const seedProductsModule = useMutation(api.seed.seedProductsModule);
-  const seedCommentsModule = useMutation(api.seed.seedCommentsModule);
-  const seedOrdersModule = useMutation(api.seed.seedOrdersModule);
-  const seedMediaModule = useMutation(api.seed.seedMediaModule);
-  const seedCustomersModule = useMutation(api.seed.seedCustomersModule);
-  const seedWishlistModule = useMutation(api.seed.seedWishlistModule);
-  const seedCartModule = useMutation(api.seed.seedCartModule);
-  const seedUsersModule = useMutation(api.seed.seedUsersModule);
-  const seedRolesModule = useMutation(api.seed.seedRolesModule);
-  const seedSettingsModule = useMutation(api.seed.seedSettingsModule);
-  const seedMenusModule = useMutation(api.seed.seedMenusModule);
-  const seedHomepageModule = useMutation(api.seed.seedHomepageModule);
-  const seedNotificationsModule = useMutation(api.seed.seedNotificationsModule);
-  const seedPromotionsModule = useMutation(api.seed.seedPromotionsModule);
-  const seedServicesModule = useMutation(api.seed.seedServicesModule);
+  const seedAllModulesConfig = useAction(api.seed.seedAllModulesConfig);
 
   const [seedingModule, setSeedingModule] = useState<string | null>(null);
   const [clearingModule, setClearingModule] = useState<string | null>(null);
@@ -133,36 +116,12 @@ export function DataCommandCenter() {
         }
       }
 
-      const moduleConfigSeeders = [
-        { label: 'Core system', run: seedAll },
-        { label: 'Analytics', run: seedAnalyticsModule },
-        { label: 'Posts', run: seedPostsModule },
-        { label: 'Products', run: seedProductsModule },
-        { label: 'Comments', run: seedCommentsModule },
-        { label: 'Orders', run: seedOrdersModule },
-        { label: 'Media', run: seedMediaModule },
-        { label: 'Customers', run: seedCustomersModule },
-        { label: 'Wishlist', run: seedWishlistModule },
-        { label: 'Cart', run: seedCartModule },
-        { label: 'Users', run: seedUsersModule },
-        { label: 'Roles', run: seedRolesModule },
-        { label: 'Settings', run: seedSettingsModule },
-        { label: 'Menus', run: seedMenusModule },
-        { label: 'Homepage', run: seedHomepageModule },
-        { label: 'Notifications', run: seedNotificationsModule },
-        { label: 'Promotions', run: seedPromotionsModule },
-        { label: 'Services', run: seedServicesModule },
-      ];
-
-      for (let index = 0; index < moduleConfigSeeders.length; index += 1) {
-        const step = moduleConfigSeeders[index];
-        setResetProgress({
-          current: index + 1,
-          label: `Khởi tạo cấu hình: ${step.label}`,
-          total: moduleConfigSeeders.length,
-        });
-        await step.run({});
-      }
+      setResetProgress({
+        current: 1,
+        label: 'Khởi tạo cấu hình hệ thống',
+        total: 1,
+      });
+      await seedAllModulesConfig({});
 
       toast.success('Đã xóa sạch toàn bộ dữ liệu');
       return true;

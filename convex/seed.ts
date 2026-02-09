@@ -1,5 +1,6 @@
-import { mutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
+import { api } from "./_generated/api";
+import { action, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { seedPresetProductOptions } from "./seeders/productOptions.seeder";
 import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS } from "../lib/orders/statuses";
@@ -104,8 +105,9 @@ export const seedPresets = mutation({
 
 // ============ ANALYTICS MODULE ============
 export const seedAnalyticsModule = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    void args;
     // 1. Seed features
     const existingFeatures = await ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "analytics")).first();
     if (!existingFeatures) {
@@ -178,63 +180,67 @@ export const clearAnalyticsConfig = mutation({
 
 // Seed Posts module: categories, posts, features, fields, settings
 export const seedPostsModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed roles if not exist
-    let adminRoleId = (await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Admin")).first())?._id;
-    adminRoleId ??= await ctx.db.insert("roles", {
-        color: "#3b82f6",
-        description: "Quản trị viên hệ thống",
-        isSuperAdmin: true,
-        isSystem: true,
-        name: "Admin",
-        permissions: { "*": ["*"] },
-      });
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
 
-    // 2. Seed users if not exist
-    const adminUser = await ctx.db.query("users").withIndex("by_email", q => q.eq("email", "admin@example.com")).first();
-    if (!adminUser) {
-      await ctx.db.insert("users", {
-        email: "admin@example.com",
-        name: "Admin User",
-        roleId: adminRoleId,
-        status: "Active",
-      });
-    }
+    if (!configOnly) {
+      // 1. Seed roles if not exist
+      let adminRoleId = (await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Admin")).first())?._id;
+      adminRoleId ??= await ctx.db.insert("roles", {
+          color: "#3b82f6",
+          description: "Quản trị viên hệ thống",
+          isSuperAdmin: true,
+          isSystem: true,
+          name: "Admin",
+          permissions: { "*": ["*"] },
+        });
 
-    // 3. Seed post categories
-    const existingCategories = await ctx.db.query("postCategories").first();
-    if (!existingCategories) {
-      const categories = [
-        { active: true, description: "Tin tức mới nhất", name: "Tin tức", order: 0, slug: "tin-tuc" },
-        { active: true, description: "Các bài hướng dẫn chi tiết", name: "Hướng dẫn", order: 1, slug: "huong-dan" },
-        { active: true, description: "Thông tin khuyến mãi", name: "Khuyến mãi", order: 2, slug: "khuyen-mai" },
-        { active: true, description: "Các sự kiện sắp diễn ra", name: "Sự kiện", order: 3, slug: "su-kien" },
-        { active: false, description: "Tin công nghệ", name: "Công nghệ", order: 4, slug: "cong-nghe" },
-      ];
-      for (const cat of categories) {
-        await ctx.db.insert("postCategories", cat);
+      // 2. Seed users if not exist
+      const adminUser = await ctx.db.query("users").withIndex("by_email", q => q.eq("email", "admin@example.com")).first();
+      if (!adminUser) {
+        await ctx.db.insert("users", {
+          email: "admin@example.com",
+          name: "Admin User",
+          roleId: adminRoleId,
+          status: "Active",
+        });
       }
-    }
 
-    // 4. Seed posts
-    const existingPosts = await ctx.db.query("posts").first();
-    if (!existingPosts) {
-      const tinTucCat = await ctx.db.query("postCategories").withIndex("by_slug", q => q.eq("slug", "tin-tuc")).first();
-      const huongDanCat = await ctx.db.query("postCategories").withIndex("by_slug", q => q.eq("slug", "huong-dan")).first();
-      const khuyenMaiCat = await ctx.db.query("postCategories").withIndex("by_slug", q => q.eq("slug", "khuyen-mai")).first();
-      
-      if (tinTucCat && huongDanCat && khuyenMaiCat) {
-        const posts = [
-          { authorName: "Admin", categoryId: tinTucCat._id, content: "<p>Chúng tôi vui mừng giới thiệu dòng sản phẩm mới nhất với nhiều tính năng đột phá...</p>", excerpt: "Khám phá dòng sản phẩm mới với công nghệ tiên tiến", order: 0, publishedAt: Date.now() - 86_400_000, slug: "ra-mat-san-pham-moi-thang-1-2025", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400", title: "Ra mắt sản phẩm mới tháng 1/2025", views: 1250 },
-          { authorName: "Admin", categoryId: huongDanCat._id, content: "<p>Bài viết này sẽ hướng dẫn bạn từng bước cách sử dụng ứng dụng di động của chúng tôi...</p>", excerpt: "Hướng dẫn chi tiết từ A-Z", order: 1, publishedAt: Date.now() - 172_800_000, slug: "huong-dan-su-dung-ung-dung-di-dong", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400", title: "Hướng dẫn sử dụng ứng dụng di động", views: 890 },
-          { authorName: "Admin", categoryId: khuyenMaiCat._id, content: "<p>Chương trình khuyến mãi đặc biệt giảm giá lên đến 50% cho tất cả sản phẩm...</p>", excerpt: "Ưu đãi khủng mừng năm mới 2025", order: 2, publishedAt: Date.now() - 259_200_000, slug: "giam-gia-50-nhan-dip-nam-moi", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=400", title: "Giảm giá 50% nhân dịp năm mới", views: 2100 },
-          { authorName: "Admin", categoryId: tinTucCat._id, content: "<p>Chính sách bảo hành mới sẽ có hiệu lực từ ngày 01/02/2025 với nhiều cải tiến...</p>", excerpt: "Thông tin chính sách bảo hành", order: 3, slug: "cap-nhat-chinh-sach-bao-hanh-moi", status: "Draft" as const, thumbnail: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400", title: "Cập nhật chính sách bảo hành mới", views: 0 },
-          { authorName: "Admin", categoryId: huongDanCat._id, content: "<p>Các phương thức thanh toán online được hỗ trợ và hướng dẫn chi tiết...</p>", excerpt: "Thanh toán nhanh chóng, an toàn", order: 4, publishedAt: Date.now() - 345_600_000, slug: "huong-dan-thanh-toan-online", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400", title: "Hướng dẫn thanh toán online", views: 650 },
-          { authorName: "Admin", categoryId: tinTucCat._id, content: "<p>Điểm lại những sản phẩm được yêu thích nhất trong năm qua...</p>", excerpt: "Những sản phẩm hot nhất năm", order: 5, publishedAt: Date.now() - 604_800_000, slug: "top-10-san-pham-ban-chay-nhat-2024", status: "Archived" as const, thumbnail: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400", title: "Top 10 sản phẩm bán chạy nhất 2024", views: 3200 },
+      // 3. Seed post categories
+      const existingCategories = await ctx.db.query("postCategories").first();
+      if (!existingCategories) {
+        const categories = [
+          { active: true, description: "Tin tức mới nhất", name: "Tin tức", order: 0, slug: "tin-tuc" },
+          { active: true, description: "Các bài hướng dẫn chi tiết", name: "Hướng dẫn", order: 1, slug: "huong-dan" },
+          { active: true, description: "Thông tin khuyến mãi", name: "Khuyến mãi", order: 2, slug: "khuyen-mai" },
+          { active: true, description: "Các sự kiện sắp diễn ra", name: "Sự kiện", order: 3, slug: "su-kien" },
+          { active: false, description: "Tin công nghệ", name: "Công nghệ", order: 4, slug: "cong-nghe" },
         ];
-        for (const post of posts) {
-          await ctx.db.insert("posts", post);
+        for (const cat of categories) {
+          await ctx.db.insert("postCategories", cat);
+        }
+      }
+
+      // 4. Seed posts
+      const existingPosts = await ctx.db.query("posts").first();
+      if (!existingPosts) {
+        const tinTucCat = await ctx.db.query("postCategories").withIndex("by_slug", q => q.eq("slug", "tin-tuc")).first();
+        const huongDanCat = await ctx.db.query("postCategories").withIndex("by_slug", q => q.eq("slug", "huong-dan")).first();
+        const khuyenMaiCat = await ctx.db.query("postCategories").withIndex("by_slug", q => q.eq("slug", "khuyen-mai")).first();
+        
+        if (tinTucCat && huongDanCat && khuyenMaiCat) {
+          const posts = [
+            { authorName: "Admin", categoryId: tinTucCat._id, content: "<p>Chúng tôi vui mừng giới thiệu dòng sản phẩm mới nhất với nhiều tính năng đột phá...</p>", excerpt: "Khám phá dòng sản phẩm mới với công nghệ tiên tiến", order: 0, publishedAt: Date.now() - 86_400_000, slug: "ra-mat-san-pham-moi-thang-1-2025", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400", title: "Ra mắt sản phẩm mới tháng 1/2025", views: 1250 },
+            { authorName: "Admin", categoryId: huongDanCat._id, content: "<p>Bài viết này sẽ hướng dẫn bạn từng bước cách sử dụng ứng dụng di động của chúng tôi...</p>", excerpt: "Hướng dẫn chi tiết từ A-Z", order: 1, publishedAt: Date.now() - 172_800_000, slug: "huong-dan-su-dung-ung-dung-di-dong", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400", title: "Hướng dẫn sử dụng ứng dụng di động", views: 890 },
+            { authorName: "Admin", categoryId: khuyenMaiCat._id, content: "<p>Chương trình khuyến mãi đặc biệt giảm giá lên đến 50% cho tất cả sản phẩm...</p>", excerpt: "Ưu đãi khủng mừng năm mới 2025", order: 2, publishedAt: Date.now() - 259_200_000, slug: "giam-gia-50-nhan-dip-nam-moi", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=400", title: "Giảm giá 50% nhân dịp năm mới", views: 2100 },
+            { authorName: "Admin", categoryId: tinTucCat._id, content: "<p>Chính sách bảo hành mới sẽ có hiệu lực từ ngày 01/02/2025 với nhiều cải tiến...</p>", excerpt: "Thông tin chính sách bảo hành", order: 3, slug: "cap-nhat-chinh-sach-bao-hanh-moi", status: "Draft" as const, thumbnail: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400", title: "Cập nhật chính sách bảo hành mới", views: 0 },
+            { authorName: "Admin", categoryId: huongDanCat._id, content: "<p>Các phương thức thanh toán online được hỗ trợ và hướng dẫn chi tiết...</p>", excerpt: "Thanh toán nhanh chóng, an toàn", order: 4, publishedAt: Date.now() - 345_600_000, slug: "huong-dan-thanh-toan-online", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400", title: "Hướng dẫn thanh toán online", views: 650 },
+            { authorName: "Admin", categoryId: tinTucCat._id, content: "<p>Điểm lại những sản phẩm được yêu thích nhất trong năm qua...</p>", excerpt: "Những sản phẩm hot nhất năm", order: 5, publishedAt: Date.now() - 604_800_000, slug: "top-10-san-pham-ban-chay-nhat-2024", status: "Archived" as const, thumbnail: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400", title: "Top 10 sản phẩm bán chạy nhất 2024", views: 3200 },
+          ];
+          for (const post of posts) {
+            await ctx.db.insert("posts", post);
+          }
         }
       }
     }
@@ -550,44 +556,48 @@ export const seedAll = mutation({
 // ============ PRODUCTS MODULE ============
 
 export const seedProductsModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed product categories
-    const existingCategories = await ctx.db.query("productCategories").first();
-    if (!existingCategories) {
-      const categories = [
-        { active: true, description: "Thiết bị điện tử, công nghệ", name: "Điện tử", order: 0, slug: "dien-tu" },
-        { active: true, description: "Quần áo, phụ kiện thời trang", name: "Thời trang", order: 1, slug: "thoi-trang" },
-        { active: true, description: "Đồ dùng gia đình", name: "Gia dụng", order: 2, slug: "gia-dung" },
-        { active: true, description: "Sách, vở, dụng cụ văn phòng", name: "Sách & Văn phòng phẩm", order: 3, slug: "sach-van-phong-pham" },
-        { active: false, description: "Dụng cụ, trang phục thể thao", name: "Thể thao", order: 4, slug: "the-thao" },
-      ];
-      for (const cat of categories) {
-        await ctx.db.insert("productCategories", cat);
-      }
-    }
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
 
-    // 2. Seed products
-    const existingProducts = await ctx.db.query("products").first();
-    if (!existingProducts) {
-      const dienTuCat = await ctx.db.query("productCategories").withIndex("by_slug", q => q.eq("slug", "dien-tu")).first();
-      const thoiTrangCat = await ctx.db.query("productCategories").withIndex("by_slug", q => q.eq("slug", "thoi-trang")).first();
-      const giaDungCat = await ctx.db.query("productCategories").withIndex("by_slug", q => q.eq("slug", "gia-dung")).first();
-      
-      if (dienTuCat && thoiTrangCat && giaDungCat) {
-        const products = [
-          { categoryId: dienTuCat._id, description: "iPhone 15 Pro Max 256GB chính hãng Apple", image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400", name: "iPhone 15 Pro Max", order: 0, price: 34_990_000, salePrice: 32_990_000, sales: 125, sku: "IP15PM-256", slug: "iphone-15-pro-max", status: "Active" as const, stock: 50 },
-          { categoryId: dienTuCat._id, description: "Samsung Galaxy S24 Ultra 512GB", image: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400", name: "Samsung Galaxy S24 Ultra", order: 1, price: 33_990_000, sales: 89, sku: "SS-S24U-512", slug: "samsung-galaxy-s24-ultra", status: "Active" as const, stock: 35 },
-          { categoryId: dienTuCat._id, description: "MacBook Pro 14 inch chip M3", image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400", name: "MacBook Pro M3", order: 2, price: 49_990_000, sales: 45, sku: "MBP-M3-14", slug: "macbook-pro-m3", status: "Active" as const, stock: 20 },
-          { categoryId: thoiTrangCat._id, description: "Áo polo nam cao cấp, chất liệu cotton", image: "https://images.unsplash.com/photo-1625910513413-5fc5f8b9920b?w=400", name: "Áo Polo Nam Premium", order: 3, price: 450_000, salePrice: 350_000, sales: 320, sku: "POLO-NAM-001", slug: "ao-polo-nam-premium", status: "Active" as const, stock: 200 },
-          { categoryId: thoiTrangCat._id, description: "Quần jean nam form slim fit", image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400", name: "Quần Jean Nam Slim Fit", order: 4, price: 650_000, sales: 180, sku: "JEAN-NAM-001", slug: "quan-jean-nam-slim-fit", status: "Active" as const, stock: 150 },
-          { categoryId: giaDungCat._id, description: "Nồi chiên không dầu Philips 4.1L", image: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=400", name: "Nồi chiên không dầu Philips", order: 5, price: 3_500_000, salePrice: 2_990_000, sales: 95, sku: "AF-PHILIPS-01", slug: "noi-chien-khong-dau-philips", status: "Active" as const, stock: 80 },
-          { categoryId: giaDungCat._id, description: "Robot hút bụi lau nhà Xiaomi", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400", name: "Robot hút bụi Xiaomi", order: 6, price: 8_500_000, sales: 42, sku: "ROBOT-XIAOMI-01", slug: "robot-hut-bui-xiaomi", status: "Active" as const, stock: 5 },
-          { categoryId: dienTuCat._id, description: "Tai nghe AirPods Pro thế hệ 2", image: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400", name: "Tai nghe AirPods Pro 2", order: 7, price: 6_990_000, sales: 0, sku: "APP2-2024", slug: "tai-nghe-airpods-pro-2", status: "Draft" as const, stock: 0 },
-          { categoryId: thoiTrangCat._id, description: "Váy đầm nữ sang trọng dự tiệc", image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400", name: "Váy đầm nữ dự tiệc", order: 8, price: 890_000, sales: 75, sku: "DRESS-NU-001", slug: "vay-dam-nu-du-tiec", status: "Archived" as const, stock: 60 },
+    if (!configOnly) {
+      // 1. Seed product categories
+      const existingCategories = await ctx.db.query("productCategories").first();
+      if (!existingCategories) {
+        const categories = [
+          { active: true, description: "Thiết bị điện tử, công nghệ", name: "Điện tử", order: 0, slug: "dien-tu" },
+          { active: true, description: "Quần áo, phụ kiện thời trang", name: "Thời trang", order: 1, slug: "thoi-trang" },
+          { active: true, description: "Đồ dùng gia đình", name: "Gia dụng", order: 2, slug: "gia-dung" },
+          { active: true, description: "Sách, vở, dụng cụ văn phòng", name: "Sách & Văn phòng phẩm", order: 3, slug: "sach-van-phong-pham" },
+          { active: false, description: "Dụng cụ, trang phục thể thao", name: "Thể thao", order: 4, slug: "the-thao" },
         ];
-        for (const product of products) {
-          await ctx.db.insert("products", product);
+        for (const cat of categories) {
+          await ctx.db.insert("productCategories", cat);
+        }
+      }
+
+      // 2. Seed products
+      const existingProducts = await ctx.db.query("products").first();
+      if (!existingProducts) {
+        const dienTuCat = await ctx.db.query("productCategories").withIndex("by_slug", q => q.eq("slug", "dien-tu")).first();
+        const thoiTrangCat = await ctx.db.query("productCategories").withIndex("by_slug", q => q.eq("slug", "thoi-trang")).first();
+        const giaDungCat = await ctx.db.query("productCategories").withIndex("by_slug", q => q.eq("slug", "gia-dung")).first();
+        
+        if (dienTuCat && thoiTrangCat && giaDungCat) {
+          const products = [
+            { categoryId: dienTuCat._id, description: "iPhone 15 Pro Max 256GB chính hãng Apple", image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400", name: "iPhone 15 Pro Max", order: 0, price: 34_990_000, salePrice: 32_990_000, sales: 125, sku: "IP15PM-256", slug: "iphone-15-pro-max", status: "Active" as const, stock: 50 },
+            { categoryId: dienTuCat._id, description: "Samsung Galaxy S24 Ultra 512GB", image: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400", name: "Samsung Galaxy S24 Ultra", order: 1, price: 33_990_000, sales: 89, sku: "SS-S24U-512", slug: "samsung-galaxy-s24-ultra", status: "Active" as const, stock: 35 },
+            { categoryId: dienTuCat._id, description: "MacBook Pro 14 inch chip M3", image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400", name: "MacBook Pro M3", order: 2, price: 49_990_000, sales: 45, sku: "MBP-M3-14", slug: "macbook-pro-m3", status: "Active" as const, stock: 20 },
+            { categoryId: thoiTrangCat._id, description: "Áo polo nam cao cấp, chất liệu cotton", image: "https://images.unsplash.com/photo-1625910513413-5fc5f8b9920b?w=400", name: "Áo Polo Nam Premium", order: 3, price: 450_000, salePrice: 350_000, sales: 320, sku: "POLO-NAM-001", slug: "ao-polo-nam-premium", status: "Active" as const, stock: 200 },
+            { categoryId: thoiTrangCat._id, description: "Quần jean nam form slim fit", image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400", name: "Quần Jean Nam Slim Fit", order: 4, price: 650_000, sales: 180, sku: "JEAN-NAM-001", slug: "quan-jean-nam-slim-fit", status: "Active" as const, stock: 150 },
+            { categoryId: giaDungCat._id, description: "Nồi chiên không dầu Philips 4.1L", image: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=400", name: "Nồi chiên không dầu Philips", order: 5, price: 3_500_000, salePrice: 2_990_000, sales: 95, sku: "AF-PHILIPS-01", slug: "noi-chien-khong-dau-philips", status: "Active" as const, stock: 80 },
+            { categoryId: giaDungCat._id, description: "Robot hút bụi lau nhà Xiaomi", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400", name: "Robot hút bụi Xiaomi", order: 6, price: 8_500_000, sales: 42, sku: "ROBOT-XIAOMI-01", slug: "robot-hut-bui-xiaomi", status: "Active" as const, stock: 5 },
+            { categoryId: dienTuCat._id, description: "Tai nghe AirPods Pro thế hệ 2", image: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400", name: "Tai nghe AirPods Pro 2", order: 7, price: 6_990_000, sales: 0, sku: "APP2-2024", slug: "tai-nghe-airpods-pro-2", status: "Draft" as const, stock: 0 },
+            { categoryId: thoiTrangCat._id, description: "Váy đầm nữ sang trọng dự tiệc", image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400", name: "Váy đầm nữ dự tiệc", order: 8, price: 890_000, sales: 75, sku: "DRESS-NU-001", slug: "vay-dam-nu-du-tiec", status: "Archived" as const, stock: 60 },
+          ];
+          for (const product of products) {
+            await ctx.db.insert("products", product);
+          }
         }
       }
     }
@@ -818,8 +828,9 @@ export const clearProductsConfig = mutation({
 // ============ COMMENTS MODULE ============
 
 export const seedCommentsModule = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    void args;
     // 1. Seed module features
     const existingFeatures = await ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "comments")).first();
     if (!existingFeatures) {
@@ -902,33 +913,36 @@ export const clearCommentsConfig = mutation({
 // ============ ORDERS MODULE ============
 
 export const seedOrdersModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Ensure customers exist
-    let customers = await ctx.db.query("customers").collect();
-    if (customers.length === 0) {
-      const customerData = [
-        { address: "123 Nguyễn Huệ, Q.1", city: "Hồ Chí Minh", email: "nguyenvanan@gmail.com", name: "Nguyễn Văn An", ordersCount: 0, phone: "0901234567", status: "Active" as const, totalSpent: 0 },
-        { address: "456 Lê Lợi, Q.3", city: "Hồ Chí Minh", email: "tranthibinh@gmail.com", name: "Trần Thị Bình", ordersCount: 0, phone: "0912345678", status: "Active" as const, totalSpent: 0 },
-        { address: "789 Trần Hưng Đạo, Q.5", city: "Hà Nội", email: "levancuong@gmail.com", name: "Lê Văn Cường", ordersCount: 0, phone: "0923456789", status: "Active" as const, totalSpent: 0 },
-      ];
-      for (const c of customerData) {
-        await ctx.db.insert("customers", c);
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
+
+    if (!configOnly) {
+      // 1. Ensure customers exist
+      let customers = await ctx.db.query("customers").collect();
+      if (customers.length === 0) {
+        const customerData = [
+          { address: "123 Nguyễn Huệ, Q.1", city: "Hồ Chí Minh", email: "nguyenvanan@gmail.com", name: "Nguyễn Văn An", ordersCount: 0, phone: "0901234567", status: "Active" as const, totalSpent: 0 },
+          { address: "456 Lê Lợi, Q.3", city: "Hồ Chí Minh", email: "tranthibinh@gmail.com", name: "Trần Thị Bình", ordersCount: 0, phone: "0912345678", status: "Active" as const, totalSpent: 0 },
+          { address: "789 Trần Hưng Đạo, Q.5", city: "Hà Nội", email: "levancuong@gmail.com", name: "Lê Văn Cường", ordersCount: 0, phone: "0923456789", status: "Active" as const, totalSpent: 0 },
+        ];
+        for (const c of customerData) {
+          await ctx.db.insert("customers", c);
+        }
+        customers = await ctx.db.query("customers").collect();
       }
-      customers = await ctx.db.query("customers").collect();
-    }
 
-    // 2. Ensure products exist
-    const products = await ctx.db.query("products").collect();
-    if (products.length === 0) {
-      console.log("No products found. Please seed products first.");
-      return null;
-    }
+      // 2. Ensure products exist
+      const products = await ctx.db.query("products").collect();
+      if (products.length === 0) {
+        console.log("No products found. Please seed products first.");
+        return null;
+      }
 
-    // 3. Seed orders
-    const existingOrders = await ctx.db.query("orders").first();
-    if (!existingOrders) {
-      const ordersData = [
+      // 3. Seed orders
+      const existingOrders = await ctx.db.query("orders").first();
+      if (!existingOrders) {
+        const ordersData = [
         {
           customerId: customers[0]._id,
           items: [
@@ -1005,8 +1019,9 @@ export const seedOrdersModule = mutation({
           totalAmount: (products[4] ? products[4].price : products[0].price) + 20_000,
         },
       ];
-      for (const order of ordersData) {
-        await ctx.db.insert("orders", order);
+        for (const order of ordersData) {
+          await ctx.db.insert("orders", order);
+        }
       }
     }
 
@@ -1098,8 +1113,9 @@ export const clearOrdersConfig = mutation({
 // ============ MEDIA MODULE ============
 
 export const seedMediaModule = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    void args;
     // 1. Seed module features
     const existingFeatures = await ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "media")).first();
     if (!existingFeatures) {
@@ -1251,23 +1267,27 @@ export const clearMediaConfig = mutation({
 // ============ CUSTOMERS MODULE ============
 
 export const seedCustomersModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed customers data if not exists
-    const existingCustomers = await ctx.db.query("customers").first();
-    if (!existingCustomers) {
-      const customers = [
-        { address: "123 Nguyễn Huệ, Q.1", city: "Hồ Chí Minh", email: "nguyenvanan@gmail.com", name: "Nguyễn Văn An", ordersCount: 5, phone: "0901234567", status: "Active" as const, totalSpent: 15_000_000 },
-        { address: "456 Lê Lợi, Q.3", city: "Hồ Chí Minh", email: "tranthibinh@gmail.com", name: "Trần Thị Bình", ordersCount: 3, phone: "0912345678", status: "Active" as const, totalSpent: 8_500_000 },
-        { address: "789 Trần Hưng Đạo", city: "Hà Nội", email: "levancuong@gmail.com", name: "Lê Văn Cường", ordersCount: 8, phone: "0923456789", status: "Active" as const, totalSpent: 25_000_000 },
-        { address: "321 Hai Bà Trưng", city: "Đà Nẵng", email: "phamthidung@gmail.com", name: "Phạm Thị Dung", ordersCount: 2, phone: "0934567890", status: "Active" as const, totalSpent: 4_200_000 },
-        { address: "654 Phan Đình Phùng", city: "Cần Thơ", email: "hoangvanem@gmail.com", name: "Hoàng Văn Em", ordersCount: 1, phone: "0945678901", status: "Inactive" as const, totalSpent: 1_500_000 },
-        { address: "987 Nguyễn Trãi, Q.5", city: "Hồ Chí Minh", email: "vuthiphuong@gmail.com", name: "Vũ Thị Phương", notes: "VIP Customer", ordersCount: 12, phone: "0956789012", status: "Active" as const, totalSpent: 45_000_000 },
-        { address: "147 Lý Thường Kiệt", city: "Hà Nội", email: "dovangiang@gmail.com", name: "Đỗ Văn Giang", ordersCount: 0, phone: "0967890123", status: "Active" as const, totalSpent: 0 },
-        { address: "258 Trần Phú", city: "Nha Trang", email: "ngothihanh@gmail.com", name: "Ngô Thị Hạnh", ordersCount: 4, phone: "0978901234", status: "Inactive" as const, totalSpent: 12_000_000 },
-      ];
-      for (const c of customers) {
-        await ctx.db.insert("customers", c);
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
+
+    if (!configOnly) {
+      // 1. Seed customers data if not exists
+      const existingCustomers = await ctx.db.query("customers").first();
+      if (!existingCustomers) {
+        const customers = [
+          { address: "123 Nguyễn Huệ, Q.1", city: "Hồ Chí Minh", email: "nguyenvanan@gmail.com", name: "Nguyễn Văn An", ordersCount: 5, phone: "0901234567", status: "Active" as const, totalSpent: 15_000_000 },
+          { address: "456 Lê Lợi, Q.3", city: "Hồ Chí Minh", email: "tranthibinh@gmail.com", name: "Trần Thị Bình", ordersCount: 3, phone: "0912345678", status: "Active" as const, totalSpent: 8_500_000 },
+          { address: "789 Trần Hưng Đạo", city: "Hà Nội", email: "levancuong@gmail.com", name: "Lê Văn Cường", ordersCount: 8, phone: "0923456789", status: "Active" as const, totalSpent: 25_000_000 },
+          { address: "321 Hai Bà Trưng", city: "Đà Nẵng", email: "phamthidung@gmail.com", name: "Phạm Thị Dung", ordersCount: 2, phone: "0934567890", status: "Active" as const, totalSpent: 4_200_000 },
+          { address: "654 Phan Đình Phùng", city: "Cần Thơ", email: "hoangvanem@gmail.com", name: "Hoàng Văn Em", ordersCount: 1, phone: "0945678901", status: "Inactive" as const, totalSpent: 1_500_000 },
+          { address: "987 Nguyễn Trãi, Q.5", city: "Hồ Chí Minh", email: "vuthiphuong@gmail.com", name: "Vũ Thị Phương", notes: "VIP Customer", ordersCount: 12, phone: "0956789012", status: "Active" as const, totalSpent: 45_000_000 },
+          { address: "147 Lý Thường Kiệt", city: "Hà Nội", email: "dovangiang@gmail.com", name: "Đỗ Văn Giang", ordersCount: 0, phone: "0967890123", status: "Active" as const, totalSpent: 0 },
+          { address: "258 Trần Phú", city: "Nha Trang", email: "ngothihanh@gmail.com", name: "Ngô Thị Hạnh", ordersCount: 4, phone: "0978901234", status: "Inactive" as const, totalSpent: 12_000_000 },
+        ];
+        for (const c of customers) {
+          await ctx.db.insert("customers", c);
+        }
       }
     }
 
@@ -1349,53 +1369,57 @@ export const clearCustomersConfig = mutation({
 // ============ WISHLIST MODULE ============
 
 export const seedWishlistModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Ensure customers exist
-    const customers = await ctx.db.query("customers").collect();
-    if (customers.length === 0) {
-      console.log("No customers found. Please seed customers first.");
-      return null;
-    }
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
 
-    // 2. Ensure products exist
-    const products = await ctx.db.query("products").collect();
-    if (products.length === 0) {
-      console.log("No products found. Please seed products first.");
-      return null;
-    }
-
-    // 3. Seed wishlist items
-    const existingWishlist = await ctx.db.query("wishlist").first();
-    if (!existingWishlist) {
-      const wishlistData = [];
-      
-      // Customer 1: 3 products
-      if (customers[0] && products[0]) {
-        wishlistData.push({ customerId: customers[0]._id, productId: products[0]._id });
-      }
-      if (customers[0] && products[2]) {
-        wishlistData.push({ customerId: customers[0]._id, productId: products[2]._id });
-      }
-      if (customers[0] && products[4]) {
-        wishlistData.push({ customerId: customers[0]._id, note: "Chờ giảm giá", productId: products[4]._id });
-      }
-      
-      // Customer 2: 2 products
-      if (customers[1] && products[1]) {
-        wishlistData.push({ customerId: customers[1]._id, productId: products[1]._id });
-      }
-      if (customers[1] && products[3]) {
-        wishlistData.push({ customerId: customers[1]._id, note: "Mua làm quà", productId: products[3]._id });
-      }
-      
-      // Customer 3: 1 product
-      if (customers[2] && products[5]) {
-        wishlistData.push({ customerId: customers[2]._id, productId: products[5]._id });
+    if (!configOnly) {
+      // 1. Ensure customers exist
+      const customers = await ctx.db.query("customers").collect();
+      if (customers.length === 0) {
+        console.log("No customers found. Please seed customers first.");
+        return null;
       }
 
-      for (const item of wishlistData) {
-        await ctx.db.insert("wishlist", item);
+      // 2. Ensure products exist
+      const products = await ctx.db.query("products").collect();
+      if (products.length === 0) {
+        console.log("No products found. Please seed products first.");
+        return null;
+      }
+
+      // 3. Seed wishlist items
+      const existingWishlist = await ctx.db.query("wishlist").first();
+      if (!existingWishlist) {
+        const wishlistData = [];
+        
+        // Customer 1: 3 products
+        if (customers[0] && products[0]) {
+          wishlistData.push({ customerId: customers[0]._id, productId: products[0]._id });
+        }
+        if (customers[0] && products[2]) {
+          wishlistData.push({ customerId: customers[0]._id, productId: products[2]._id });
+        }
+        if (customers[0] && products[4]) {
+          wishlistData.push({ customerId: customers[0]._id, note: "Chờ giảm giá", productId: products[4]._id });
+        }
+        
+        // Customer 2: 2 products
+        if (customers[1] && products[1]) {
+          wishlistData.push({ customerId: customers[1]._id, productId: products[1]._id });
+        }
+        if (customers[1] && products[3]) {
+          wishlistData.push({ customerId: customers[1]._id, note: "Mua làm quà", productId: products[3]._id });
+        }
+        
+        // Customer 3: 1 product
+        if (customers[2] && products[5]) {
+          wishlistData.push({ customerId: customers[2]._id, productId: products[5]._id });
+        }
+
+        for (const item of wishlistData) {
+          await ctx.db.insert("wishlist", item);
+        }
       }
     }
 
@@ -1471,94 +1495,98 @@ export const clearWishlistConfig = mutation({
 // ============ CART MODULE ============
 
 export const seedCartModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Ensure products exist
-    const products = await ctx.db.query("products").collect();
-    if (products.length === 0) {
-      console.log("No products found. Please seed products first.");
-      return null;
-    }
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
 
-    // 2. Ensure customers exist
-    let customers = await ctx.db.query("customers").collect();
-    if (customers.length === 0) {
-      const customerData = [
-        { address: "123 Nguyễn Huệ, Q.1", city: "Hồ Chí Minh", email: "nguyenvanan@gmail.com", name: "Nguyễn Văn An", ordersCount: 0, phone: "0901234567", status: "Active" as const, totalSpent: 0 },
-        { address: "456 Lê Lợi, Q.3", city: "Hồ Chí Minh", email: "tranthibinh@gmail.com", name: "Trần Thị Bình", ordersCount: 0, phone: "0912345678", status: "Active" as const, totalSpent: 0 },
-      ];
-      for (const c of customerData) {
-        await ctx.db.insert("customers", c);
+    if (!configOnly) {
+      // 1. Ensure products exist
+      const products = await ctx.db.query("products").collect();
+      if (products.length === 0) {
+        console.log("No products found. Please seed products first.");
+        return null;
       }
-      customers = await ctx.db.query("customers").collect();
-    }
 
-    // 3. Seed carts and cart items
-    const existingCarts = await ctx.db.query("carts").first();
-    if (!existingCarts) {
-      // Active cart with items
-      const cart1Id = await ctx.db.insert("carts", {
-        customerId: customers[0]._id,
-        expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-        itemsCount: 3,
-        status: "Active",
-        totalAmount: products[0].price + (products[1] ? products[1].price * 2 : products[0].price * 2),
-      });
-      await ctx.db.insert("cartItems", {
-        cartId: cart1Id,
-        price: products[0].price,
-        productId: products[0]._id,
-        productImage: products[0].image,
-        productName: products[0].name,
-        quantity: 1,
-        subtotal: products[0].price,
-      });
-      if (products[1]) {
+      // 2. Ensure customers exist
+      let customers = await ctx.db.query("customers").collect();
+      if (customers.length === 0) {
+        const customerData = [
+          { address: "123 Nguyễn Huệ, Q.1", city: "Hồ Chí Minh", email: "nguyenvanan@gmail.com", name: "Nguyễn Văn An", ordersCount: 0, phone: "0901234567", status: "Active" as const, totalSpent: 0 },
+          { address: "456 Lê Lợi, Q.3", city: "Hồ Chí Minh", email: "tranthibinh@gmail.com", name: "Trần Thị Bình", ordersCount: 0, phone: "0912345678", status: "Active" as const, totalSpent: 0 },
+        ];
+        for (const c of customerData) {
+          await ctx.db.insert("customers", c);
+        }
+        customers = await ctx.db.query("customers").collect();
+      }
+
+      // 3. Seed carts and cart items
+      const existingCarts = await ctx.db.query("carts").first();
+      if (!existingCarts) {
+        // Active cart with items
+        const cart1Id = await ctx.db.insert("carts", {
+          customerId: customers[0]._id,
+          expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+          itemsCount: 3,
+          status: "Active",
+          totalAmount: products[0].price + (products[1] ? products[1].price * 2 : products[0].price * 2),
+        });
         await ctx.db.insert("cartItems", {
           cartId: cart1Id,
-          price: products[1].price,
-          productId: products[1]._id,
-          productImage: products[1].image,
-          productName: products[1].name,
-          quantity: 2,
-          subtotal: products[1].price * 2,
+          price: products[0].price,
+          productId: products[0]._id,
+          productImage: products[0].image,
+          productName: products[0].name,
+          quantity: 1,
+          subtotal: products[0].price,
+        });
+        if (products[1]) {
+          await ctx.db.insert("cartItems", {
+            cartId: cart1Id,
+            price: products[1].price,
+            productId: products[1]._id,
+            productImage: products[1].image,
+            productName: products[1].name,
+            quantity: 2,
+            subtotal: products[1].price * 2,
+          });
+        }
+
+        // Guest cart (session-based)
+        const cart2Id = await ctx.db.insert("carts", {
+          expiresAt: Date.now() + 3 * 24 * 60 * 60 * 1000,
+          itemsCount: 1,
+          sessionId: "session_abc123xyz",
+          status: "Active",
+          totalAmount: products[2] ? products[2].price : products[0].price,
+        });
+        await ctx.db.insert("cartItems", {
+          cartId: cart2Id,
+          price: products[2] ? products[2].price : products[0].price,
+          productId: products[2] ? products[2]._id : products[0]._id,
+          productImage: products[2] ? products[2].image : products[0].image,
+          productName: products[2] ? products[2].name : products[0].name,
+          quantity: 1,
+          subtotal: products[2] ? products[2].price : products[0].price,
+        });
+
+        // Abandoned cart
+        await ctx.db.insert("carts", {
+          customerId: customers[1] ? customers[1]._id : customers[0]._id,
+          expiresAt: Date.now() - 1 * 24 * 60 * 60 * 1000,
+          itemsCount: 2,
+          status: "Abandoned",
+          totalAmount: (products[3] ? products[3].price : products[0].price) * 2,
+        });
+
+        // Converted cart
+        await ctx.db.insert("carts", {
+          customerId: customers[0]._id,
+          itemsCount: 1,
+          status: "Converted",
+          totalAmount: products[4] ? products[4].price : products[0].price,
         });
       }
-
-      // Guest cart (session-based)
-      const cart2Id = await ctx.db.insert("carts", {
-        expiresAt: Date.now() + 3 * 24 * 60 * 60 * 1000,
-        itemsCount: 1,
-        sessionId: "session_abc123xyz",
-        status: "Active",
-        totalAmount: products[2] ? products[2].price : products[0].price,
-      });
-      await ctx.db.insert("cartItems", {
-        cartId: cart2Id,
-        price: products[2] ? products[2].price : products[0].price,
-        productId: products[2] ? products[2]._id : products[0]._id,
-        productImage: products[2] ? products[2].image : products[0].image,
-        productName: products[2] ? products[2].name : products[0].name,
-        quantity: 1,
-        subtotal: products[2] ? products[2].price : products[0].price,
-      });
-
-      // Abandoned cart
-      await ctx.db.insert("carts", {
-        customerId: customers[1] ? customers[1]._id : customers[0]._id,
-        expiresAt: Date.now() - 1 * 24 * 60 * 60 * 1000,
-        itemsCount: 2,
-        status: "Abandoned",
-        totalAmount: (products[3] ? products[3].price : products[0].price) * 2,
-      });
-
-      // Converted cart
-      await ctx.db.insert("carts", {
-        customerId: customers[0]._id,
-        itemsCount: 1,
-        status: "Converted",
-        totalAmount: products[4] ? products[4].price : products[0].price,
-      });
     }
 
     // 4. Seed module features
@@ -1661,41 +1689,45 @@ export const clearCartConfig = mutation({
 // ============ USERS MODULE ============
 
 export const seedUsersModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed roles if not exist
-    const existingRoles = await ctx.db.query("roles").first();
-    if (!existingRoles) {
-      const roles: { name: string; description: string; color: string; isSystem: boolean; isSuperAdmin?: boolean; permissions: Record<string, string[]> }[] = [
-        { color: "#ef4444", description: "Toàn quyền truy cập hệ thống", isSuperAdmin: true, isSystem: true, name: "Super Admin", permissions: { "*": ["*"] } },
-        { color: "#3b82f6", description: "Quản trị viên hệ thống", isSystem: true, name: "Admin", permissions: { customers: ["read", "update"], orders: ["read", "update"], posts: ["read", "create", "update", "delete"], products: ["read", "create", "update", "delete"], settings: ["read"], users: ["read"] } },
-        { color: "#22c55e", description: "Biên tập viên nội dung", isSystem: false, name: "Editor", permissions: { media: ["read", "create"], posts: ["read", "create", "update"], products: ["read"] } },
-        { color: "#f59e0b", description: "Kiểm duyệt viên", isSystem: false, name: "Moderator", permissions: { comments: ["read", "update", "delete"], customers: ["read"], posts: ["read"], products: ["read"] } },
-      ];
-      for (const role of roles) {
-        await ctx.db.insert("roles", role);
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
+
+    if (!configOnly) {
+      // 1. Seed roles if not exist
+      const existingRoles = await ctx.db.query("roles").first();
+      if (!existingRoles) {
+        const roles: { name: string; description: string; color: string; isSystem: boolean; isSuperAdmin?: boolean; permissions: Record<string, string[]> }[] = [
+          { color: "#ef4444", description: "Toàn quyền truy cập hệ thống", isSuperAdmin: true, isSystem: true, name: "Super Admin", permissions: { "*": ["*"] } },
+          { color: "#3b82f6", description: "Quản trị viên hệ thống", isSystem: true, name: "Admin", permissions: { customers: ["read", "update"], orders: ["read", "update"], posts: ["read", "create", "update", "delete"], products: ["read", "create", "update", "delete"], settings: ["read"], users: ["read"] } },
+          { color: "#22c55e", description: "Biên tập viên nội dung", isSystem: false, name: "Editor", permissions: { media: ["read", "create"], posts: ["read", "create", "update"], products: ["read"] } },
+          { color: "#f59e0b", description: "Kiểm duyệt viên", isSystem: false, name: "Moderator", permissions: { comments: ["read", "update", "delete"], customers: ["read"], posts: ["read"], products: ["read"] } },
+        ];
+        for (const role of roles) {
+          await ctx.db.insert("roles", role);
+        }
       }
-    }
 
-    // 2. Get roles for users
-    const superAdminRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Super Admin")).first();
-    const adminRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Admin")).first();
-    const editorRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Editor")).first();
-    const moderatorRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Moderator")).first();
+      // 2. Get roles for users
+      const superAdminRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Super Admin")).first();
+      const adminRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Admin")).first();
+      const editorRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Editor")).first();
+      const moderatorRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Moderator")).first();
 
-    // 3. Seed users if not exist
-    const existingUsers = await ctx.db.query("users").first();
-    if (!existingUsers && superAdminRole && adminRole && editorRole && moderatorRole) {
-      const users = [
-        { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=superadmin", email: "superadmin@example.com", lastLogin: Date.now() - 3_600_000, name: "Super Admin", phone: "0901234567", roleId: superAdminRole._id, status: "Active" as const },
-        { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin", email: "admin@example.com", lastLogin: Date.now() - 7_200_000, name: "Admin User", phone: "0912345678", roleId: adminRole._id, status: "Active" as const },
-        { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=editor", email: "editor@example.com", lastLogin: Date.now() - 86_400_000, name: "Nguyễn Văn Editor", phone: "0923456789", roleId: editorRole._id, status: "Active" as const },
-        { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=mod", email: "mod@example.com", name: "Trần Thị Moderator", phone: "0934567890", roleId: moderatorRole._id, status: "Active" as const },
-        { email: "test@example.com", name: "Lê Văn Test", phone: "0945678901", roleId: editorRole._id, status: "Inactive" as const },
-        { email: "banned@example.com", name: "Banned User", roleId: moderatorRole._id, status: "Banned" as const },
-      ];
-      for (const user of users) {
-        await ctx.db.insert("users", user);
+      // 3. Seed users if not exist
+      const existingUsers = await ctx.db.query("users").first();
+      if (!existingUsers && superAdminRole && adminRole && editorRole && moderatorRole) {
+        const users = [
+          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=superadmin", email: "superadmin@example.com", lastLogin: Date.now() - 3_600_000, name: "Super Admin", phone: "0901234567", roleId: superAdminRole._id, status: "Active" as const },
+          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin", email: "admin@example.com", lastLogin: Date.now() - 7_200_000, name: "Admin User", phone: "0912345678", roleId: adminRole._id, status: "Active" as const },
+          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=editor", email: "editor@example.com", lastLogin: Date.now() - 86_400_000, name: "Nguyễn Văn Editor", phone: "0923456789", roleId: editorRole._id, status: "Active" as const },
+          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=mod", email: "mod@example.com", name: "Trần Thị Moderator", phone: "0934567890", roleId: moderatorRole._id, status: "Active" as const },
+          { email: "test@example.com", name: "Lê Văn Test", phone: "0945678901", roleId: editorRole._id, status: "Inactive" as const },
+          { email: "banned@example.com", name: "Banned User", roleId: moderatorRole._id, status: "Banned" as const },
+        ];
+        for (const user of users) {
+          await ctx.db.insert("users", user);
+        }
       }
     }
 
@@ -1818,19 +1850,22 @@ export const clearUsersConfig = mutation({
 // ============ ROLES MODULE ============
 
 export const seedRolesModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed roles data if not exists
-    const existingRoles = await ctx.db.query("roles").first();
-    if (!existingRoles) {
-      const roles: {
-        name: string;
-        description: string;
-        color: string;
-        isSystem: boolean;
-        isSuperAdmin: boolean;
-        permissions: Record<string, string[]>;
-      }[] = [
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
+
+    if (!configOnly) {
+      // 1. Seed roles data if not exists
+      const existingRoles = await ctx.db.query("roles").first();
+      if (!existingRoles) {
+        const roles: {
+          name: string;
+          description: string;
+          color: string;
+          isSystem: boolean;
+          isSuperAdmin: boolean;
+          permissions: Record<string, string[]>;
+        }[] = [
         { 
           color: "#ef4444", 
           description: "Toàn quyền hệ thống", 
@@ -1894,9 +1929,10 @@ export const seedRolesModule = mutation({
             products: ["view"],
           } 
         },
-      ];
-      for (const r of roles) {
-        await ctx.db.insert("roles", r);
+        ];
+        for (const r of roles) {
+          await ctx.db.insert("roles", r);
+        }
       }
     }
 
@@ -1981,12 +2017,15 @@ export const clearRolesConfig = mutation({
 // ============ SETTINGS MODULE ============
 
 export const seedSettingsModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed settings DATA (key-value pairs grouped by category)
-    const existingSettings = await ctx.db.query("settings").first();
-    if (!existingSettings) {
-      const settingsData = [
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
+
+    if (!configOnly) {
+      // 1. Seed settings DATA (key-value pairs grouped by category)
+      const existingSettings = await ctx.db.query("settings").first();
+      if (!existingSettings) {
+        const settingsData = [
         // Site settings
         { group: "site", key: "site_name", value: "VietAdmin" },
         { group: "site", key: "site_tagline", value: "Hệ thống quản trị website" },
@@ -2097,8 +2136,9 @@ export const seedSettingsModule = mutation({
           },
         },
       ];
-      for (const s of settingsData) {
-        await ctx.db.insert("settings", s);
+        for (const s of settingsData) {
+          await ctx.db.insert("settings", s);
+        }
       }
     }
 
@@ -2214,62 +2254,66 @@ export const clearSettingsConfig = mutation({
 // ============ MENUS MODULE ============
 
 export const seedMenusModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed menus
-    const existingMenus = await ctx.db.query("menus").first();
-    if (!existingMenus) {
-      const menusData = [
-        { location: "header", name: "Header Menu" },
-        { location: "footer", name: "Footer Menu" },
-        { location: "sidebar", name: "Sidebar Menu" },
-      ];
-      
-      const menuIds: Record<string, Id<"menus">> = {};
-      for (const menu of menusData) {
-        const id = await ctx.db.insert("menus", menu);
-        menuIds[menu.location] = id;
-      }
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
 
-      // 2. Seed menu items for Header
-      const headerItems = [
-        { active: true, depth: 0, label: "Trang chủ", menuId: menuIds.header, order: 0, url: "/" },
-        { active: true, depth: 0, label: "Sản phẩm", menuId: menuIds.header, order: 1, url: "/products" },
-        { active: true, depth: 1, label: "Điện tử", menuId: menuIds.header, order: 2, url: "/products?category=dien-tu" },
-        { active: true, depth: 1, label: "Thời trang", menuId: menuIds.header, order: 3, url: "/products?category=thoi-trang" },
-        { active: true, depth: 1, label: "Gia dụng", menuId: menuIds.header, order: 4, url: "/products?category=gia-dung" },
-        { active: true, depth: 0, label: "Bài viết", menuId: menuIds.header, order: 5, url: "/posts" },
-        { active: true, depth: 1, label: "Tin tức", menuId: menuIds.header, order: 6, url: "/posts?category=tin-tuc" },
-        { active: true, depth: 1, label: "Hướng dẫn", menuId: menuIds.header, order: 7, url: "/posts?category=huong-dan" },
-        { active: true, depth: 0, label: "Giới thiệu", menuId: menuIds.header, order: 8, url: "/about" },
-        { active: true, depth: 0, label: "Liên hệ", menuId: menuIds.header, order: 9, url: "/contact" },
-      ];
-      for (const item of headerItems) {
-        await ctx.db.insert("menuItems", item);
-      }
+    if (!configOnly) {
+      // 1. Seed menus
+      const existingMenus = await ctx.db.query("menus").first();
+      if (!existingMenus) {
+        const menusData = [
+          { location: "header", name: "Header Menu" },
+          { location: "footer", name: "Footer Menu" },
+          { location: "sidebar", name: "Sidebar Menu" },
+        ];
+        
+        const menuIds: Record<string, Id<"menus">> = {};
+        for (const menu of menusData) {
+          const id = await ctx.db.insert("menus", menu);
+          menuIds[menu.location] = id;
+        }
 
-      // 3. Seed menu items for Footer
-      const footerItems = [
-        { active: true, depth: 0, label: "Về chúng tôi", menuId: menuIds.footer, order: 0, url: "/about" },
-        { active: true, depth: 0, label: "Điều khoản sử dụng", menuId: menuIds.footer, order: 1, url: "/terms" },
-        { active: true, depth: 0, label: "Chính sách bảo mật", menuId: menuIds.footer, order: 2, url: "/privacy" },
-        { active: true, depth: 0, label: "Chính sách đổi trả", menuId: menuIds.footer, order: 3, url: "/return-policy" },
-        { active: true, depth: 0, label: "Hướng dẫn mua hàng", menuId: menuIds.footer, order: 4, url: "/guide" },
-        { active: true, depth: 0, label: "Liên hệ", menuId: menuIds.footer, order: 5, url: "/contact" },
-      ];
-      for (const item of footerItems) {
-        await ctx.db.insert("menuItems", item);
-      }
+        // 2. Seed menu items for Header
+        const headerItems = [
+          { active: true, depth: 0, label: "Trang chủ", menuId: menuIds.header, order: 0, url: "/" },
+          { active: true, depth: 0, label: "Sản phẩm", menuId: menuIds.header, order: 1, url: "/products" },
+          { active: true, depth: 1, label: "Điện tử", menuId: menuIds.header, order: 2, url: "/products?category=dien-tu" },
+          { active: true, depth: 1, label: "Thời trang", menuId: menuIds.header, order: 3, url: "/products?category=thoi-trang" },
+          { active: true, depth: 1, label: "Gia dụng", menuId: menuIds.header, order: 4, url: "/products?category=gia-dung" },
+          { active: true, depth: 0, label: "Bài viết", menuId: menuIds.header, order: 5, url: "/posts" },
+          { active: true, depth: 1, label: "Tin tức", menuId: menuIds.header, order: 6, url: "/posts?category=tin-tuc" },
+          { active: true, depth: 1, label: "Hướng dẫn", menuId: menuIds.header, order: 7, url: "/posts?category=huong-dan" },
+          { active: true, depth: 0, label: "Giới thiệu", menuId: menuIds.header, order: 8, url: "/about" },
+          { active: true, depth: 0, label: "Liên hệ", menuId: menuIds.header, order: 9, url: "/contact" },
+        ];
+        for (const item of headerItems) {
+          await ctx.db.insert("menuItems", item);
+        }
 
-      // 4. Seed menu items for Sidebar
-      const sidebarItems = [
-        { active: true, depth: 0, icon: "LayoutDashboard", label: "Dashboard", menuId: menuIds.sidebar, order: 0, url: "/admin/dashboard" },
-        { active: true, depth: 0, icon: "Package", label: "Sản phẩm", menuId: menuIds.sidebar, order: 1, url: "/admin/products" },
-        { active: true, depth: 0, icon: "ShoppingBag", label: "Đơn hàng", menuId: menuIds.sidebar, order: 2, url: "/admin/orders" },
-        { active: true, depth: 0, icon: "Users", label: "Khách hàng", menuId: menuIds.sidebar, order: 3, url: "/admin/customers" },
-      ];
-      for (const item of sidebarItems) {
-        await ctx.db.insert("menuItems", item);
+        // 3. Seed menu items for Footer
+        const footerItems = [
+          { active: true, depth: 0, label: "Về chúng tôi", menuId: menuIds.footer, order: 0, url: "/about" },
+          { active: true, depth: 0, label: "Điều khoản sử dụng", menuId: menuIds.footer, order: 1, url: "/terms" },
+          { active: true, depth: 0, label: "Chính sách bảo mật", menuId: menuIds.footer, order: 2, url: "/privacy" },
+          { active: true, depth: 0, label: "Chính sách đổi trả", menuId: menuIds.footer, order: 3, url: "/return-policy" },
+          { active: true, depth: 0, label: "Hướng dẫn mua hàng", menuId: menuIds.footer, order: 4, url: "/guide" },
+          { active: true, depth: 0, label: "Liên hệ", menuId: menuIds.footer, order: 5, url: "/contact" },
+        ];
+        for (const item of footerItems) {
+          await ctx.db.insert("menuItems", item);
+        }
+
+        // 4. Seed menu items for Sidebar
+        const sidebarItems = [
+          { active: true, depth: 0, icon: "LayoutDashboard", label: "Dashboard", menuId: menuIds.sidebar, order: 0, url: "/admin/dashboard" },
+          { active: true, depth: 0, icon: "Package", label: "Sản phẩm", menuId: menuIds.sidebar, order: 1, url: "/admin/products" },
+          { active: true, depth: 0, icon: "ShoppingBag", label: "Đơn hàng", menuId: menuIds.sidebar, order: 2, url: "/admin/orders" },
+          { active: true, depth: 0, icon: "Users", label: "Khách hàng", menuId: menuIds.sidebar, order: 3, url: "/admin/customers" },
+        ];
+        for (const item of sidebarItems) {
+          await ctx.db.insert("menuItems", item);
+        }
       }
     }
 
@@ -2388,12 +2432,15 @@ export const clearMenusConfig = mutation({
 // ============ HOMEPAGE MODULE ============
 
 export const seedHomepageModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed home components if not exist
-    const existingComponents = await ctx.db.query("homeComponents").first();
-    if (!existingComponents) {
-      const components = [
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
+
+    if (!configOnly) {
+      // 1. Seed home components if not exist
+      const existingComponents = await ctx.db.query("homeComponents").first();
+      if (!existingComponents) {
+        const components = [
         {
           active: true,
           config: {
@@ -2467,8 +2514,9 @@ export const seedHomepageModule = mutation({
           type: "contact",
         },
       ];
-      for (const c of components) {
-        await ctx.db.insert("homeComponents", c);
+        for (const c of components) {
+          await ctx.db.insert("homeComponents", c);
+        }
       }
     }
 
@@ -2573,21 +2621,25 @@ export const clearHomepageConfig = mutation({
 // ============ NOTIFICATIONS MODULE ============
 
 export const seedNotificationsModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed notifications data
-    const existingNotifications = await ctx.db.query("notifications").first();
-    if (!existingNotifications) {
-      const notifications = [
-        { content: "Cảm ơn bạn đã sử dụng hệ thống quản trị VietAdmin. Chúc bạn có trải nghiệm tuyệt vời!", order: 0, readCount: 125, sendEmail: false, sentAt: Date.now() - 86_400_000 * 7, status: "Sent" as const, targetType: "all" as const, title: "Chào mừng đến với VietAdmin", type: "success" as const },
-        { content: "Hệ thống đã được cập nhật lên phiên bản 2.0 với nhiều tính năng mới. Xem chi tiết tại trang cập nhật.", order: 1, readCount: 42, sendEmail: true, sentAt: Date.now() - 86_400_000 * 3, status: "Sent" as const, targetType: "users" as const, title: "Cập nhật hệ thống v2.0", type: "info" as const },
-        { content: "Hệ thống sẽ bảo trì vào 2:00 AM - 4:00 AM ngày mai. Vui lòng lưu công việc trước thời gian này.", order: 2, readCount: 0, scheduledAt: Date.now() + 86_400_000, sendEmail: true, status: "Scheduled" as const, targetType: "all" as const, title: "Bảo trì hệ thống", type: "warning" as const },
-        { content: "Giảm giá 30% toàn bộ sản phẩm từ ngày 01/01 đến 15/01. Đừng bỏ lỡ cơ hội này!", order: 3, readCount: 856, sendEmail: true, sentAt: Date.now() - 86_400_000 * 2, status: "Sent" as const, targetType: "customers" as const, title: "Khuyến mãi đặc biệt tháng 1", type: "info" as const },
-        { content: "Đã phát hiện lỗi trong quá trình thanh toán. Đội ngũ kỹ thuật đang khắc phục.", order: 4, readCount: 18, sendEmail: false, sentAt: Date.now() - 86_400_000, status: "Sent" as const, targetType: "users" as const, title: "Lỗi thanh toán", type: "error" as const },
-        { content: "Đây là thông báo đang soạn, chưa gửi.", order: 5, readCount: 0, status: "Draft" as const, targetType: "all" as const, title: "Thông báo nháp", type: "info" as const },
-      ];
-      for (const notif of notifications) {
-        await ctx.db.insert("notifications", notif);
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
+
+    if (!configOnly) {
+      // 1. Seed notifications data
+      const existingNotifications = await ctx.db.query("notifications").first();
+      if (!existingNotifications) {
+        const notifications = [
+          { content: "Cảm ơn bạn đã sử dụng hệ thống quản trị VietAdmin. Chúc bạn có trải nghiệm tuyệt vời!", order: 0, readCount: 125, sendEmail: false, sentAt: Date.now() - 86_400_000 * 7, status: "Sent" as const, targetType: "all" as const, title: "Chào mừng đến với VietAdmin", type: "success" as const },
+          { content: "Hệ thống đã được cập nhật lên phiên bản 2.0 với nhiều tính năng mới. Xem chi tiết tại trang cập nhật.", order: 1, readCount: 42, sendEmail: true, sentAt: Date.now() - 86_400_000 * 3, status: "Sent" as const, targetType: "users" as const, title: "Cập nhật hệ thống v2.0", type: "info" as const },
+          { content: "Hệ thống sẽ bảo trì vào 2:00 AM - 4:00 AM ngày mai. Vui lòng lưu công việc trước thời gian này.", order: 2, readCount: 0, scheduledAt: Date.now() + 86_400_000, sendEmail: true, status: "Scheduled" as const, targetType: "all" as const, title: "Bảo trì hệ thống", type: "warning" as const },
+          { content: "Giảm giá 30% toàn bộ sản phẩm từ ngày 01/01 đến 15/01. Đừng bỏ lỡ cơ hội này!", order: 3, readCount: 856, sendEmail: true, sentAt: Date.now() - 86_400_000 * 2, status: "Sent" as const, targetType: "customers" as const, title: "Khuyến mãi đặc biệt tháng 1", type: "info" as const },
+          { content: "Đã phát hiện lỗi trong quá trình thanh toán. Đội ngũ kỹ thuật đang khắc phục.", order: 4, readCount: 18, sendEmail: false, sentAt: Date.now() - 86_400_000, status: "Sent" as const, targetType: "users" as const, title: "Lỗi thanh toán", type: "error" as const },
+          { content: "Đây là thông báo đang soạn, chưa gửi.", order: 5, readCount: 0, status: "Draft" as const, targetType: "all" as const, title: "Thông báo nháp", type: "info" as const },
+        ];
+        for (const notif of notifications) {
+          await ctx.db.insert("notifications", notif);
+        }
       }
     }
 
@@ -2691,14 +2743,17 @@ export const clearNotificationsConfig = mutation({
 // ============ PROMOTIONS MODULE ============
 
 export const seedPromotionsModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed promotions data
-    const existingPromotions = await ctx.db.query("promotions").first();
-    if (!existingPromotions) {
-      const now = Date.now();
-      const oneDay = 24 * 60 * 60 * 1000;
-      const promotions = [
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
+
+    if (!configOnly) {
+      // 1. Seed promotions data
+      const existingPromotions = await ctx.db.query("promotions").first();
+      if (!existingPromotions) {
+        const now = Date.now();
+        const oneDay = 24 * 60 * 60 * 1000;
+        const promotions = [
         {
           applicableTo: "all" as const,
           code: "SALE10",
@@ -2797,8 +2852,9 @@ export const seedPromotionsModule = mutation({
           usedCount: 5,
         },
       ];
-      for (const p of promotions) {
-        await ctx.db.insert("promotions", p);
+        for (const p of promotions) {
+          await ctx.db.insert("promotions", p);
+        }
       }
     }
 
@@ -2955,33 +3011,36 @@ export const addServicesModuleToList = mutation({
 });
 
 export const seedServicesModule = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Seed service categories
-    const existingCategories = await ctx.db.query("serviceCategories").first();
-    if (!existingCategories) {
-      const categories = [
+  args: { configOnly: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const configOnly = args.configOnly ?? false;
+
+    if (!configOnly) {
+      // 1. Seed service categories
+      const existingCategories = await ctx.db.query("serviceCategories").first();
+      if (!existingCategories) {
+        const categories = [
         { active: true, description: "Dịch vụ tư vấn chuyên nghiệp", name: "Tư vấn", order: 0, slug: "tu-van" },
         { active: true, description: "Dịch vụ thiết kế sáng tạo", name: "Thiết kế", order: 1, slug: "thiet-ke" },
         { active: true, description: "Dịch vụ phát triển phần mềm", name: "Phát triển", order: 2, slug: "phat-trien" },
         { active: true, description: "Dịch vụ marketing số", name: "Marketing", order: 3, slug: "marketing" },
         { active: false, description: "Dịch vụ hỗ trợ kỹ thuật", name: "Hỗ trợ", order: 4, slug: "ho-tro" },
       ];
-      for (const cat of categories) {
-        await ctx.db.insert("serviceCategories", cat);
+        for (const cat of categories) {
+          await ctx.db.insert("serviceCategories", cat);
+        }
       }
-    }
 
-    // 2. Seed services
-    const existingServices = await ctx.db.query("services").first();
-    if (!existingServices) {
-      const tuVanCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "tu-van")).first();
-      const thietKeCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "thiet-ke")).first();
-      const phatTrienCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "phat-trien")).first();
-      const marketingCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "marketing")).first();
-      
-      if (tuVanCat && thietKeCat && phatTrienCat && marketingCat) {
-        const services = [
+      // 2. Seed services
+      const existingServices = await ctx.db.query("services").first();
+      if (!existingServices) {
+        const tuVanCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "tu-van")).first();
+        const thietKeCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "thiet-ke")).first();
+        const phatTrienCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "phat-trien")).first();
+        const marketingCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "marketing")).first();
+        
+        if (tuVanCat && thietKeCat && phatTrienCat && marketingCat) {
+          const services = [
           { categoryId: tuVanCat._id, content: "<p>Dịch vụ tư vấn chiến lược kinh doanh toàn diện, giúp doanh nghiệp xây dựng lộ trình phát triển bền vững...</p>", duration: "3-5 ngày", excerpt: "Xây dựng chiến lược kinh doanh hiệu quả", featured: true, order: 0, price: 15_000_000, publishedAt: Date.now() - 86_400_000, slug: "tu-van-chien-luoc-kinh-doanh", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400", title: "Tư vấn chiến lược kinh doanh", views: 850 },
           { categoryId: thietKeCat._id, content: "<p>Thiết kế website hiện đại, responsive, tối ưu SEO và trải nghiệm người dùng...</p>", duration: "2-4 tuần", excerpt: "Website đẹp, chuẩn SEO, tốc độ nhanh", featured: true, order: 1, price: 25_000_000, publishedAt: Date.now() - 172_800_000, slug: "thiet-ke-website-chuyen-nghiep", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=400", title: "Thiết kế website chuyên nghiệp", views: 1200 },
           { categoryId: phatTrienCat._id, content: "<p>Phát triển ứng dụng di động iOS và Android với công nghệ React Native, Flutter...</p>", duration: "2-3 tháng", excerpt: "App native chất lượng cao", featured: true, order: 2, price: 50_000_000, publishedAt: Date.now() - 259_200_000, slug: "phat-trien-ung-dung-mobile", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400", title: "Phát triển ứng dụng mobile", views: 680 },
@@ -2989,8 +3048,9 @@ export const seedServicesModule = mutation({
           { categoryId: thietKeCat._id, content: "<p>Xây dựng bộ nhận diện thương hiệu độc đáo, chuyên nghiệp, ghi dấu ấn trong tâm trí khách hàng...</p>", duration: "1-2 tuần", excerpt: "Bộ nhận diện thương hiệu trọn gói", featured: false, order: 4, price: 8_000_000, publishedAt: Date.now() - 432_000_000, slug: "thiet-ke-logo-nhan-dien-thuong-hieu", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1626785774625-0b1c2c4eab67?w=400", title: "Thiết kế logo & nhận diện thương hiệu", views: 450 },
           { categoryId: marketingCat._id, content: "<p>Dịch vụ SEO toàn diện giúp website lên top Google, tăng traffic organic bền vững...</p>", duration: "3-6 tháng", excerpt: "Tăng thứ hạng tìm kiếm tự nhiên", featured: false, order: 5, price: 10_000_000, slug: "seo-tong-the-website", status: "Draft" as const, thumbnail: "https://images.unsplash.com/photo-1432888622747-4eb9a8f5c5a8?w=400", title: "SEO tổng thể website", views: 0 },
         ];
-        for (const service of services) {
-          await ctx.db.insert("services", service);
+          for (const service of services) {
+            await ctx.db.insert("services", service);
+          }
         }
       }
     }
@@ -3134,4 +3194,31 @@ export const clearServicesConfig = mutation({
     return null;
   },
   returns: v.null(),
+});
+
+export const seedAllModulesConfig = action({
+  args: {},
+  handler: async (ctx) => {
+    const configArgs = { configOnly: true };
+    await ctx.runMutation(api.seed.seedModules, {});
+    await ctx.runMutation(api.seed.seedPresets, {});
+    await ctx.runMutation(api.seed.seedAnalyticsModule, configArgs);
+    await ctx.runMutation(api.seed.seedPostsModule, configArgs);
+    await ctx.runMutation(api.seed.seedProductsModule, configArgs);
+    await ctx.runMutation(api.seed.seedCommentsModule, configArgs);
+    await ctx.runMutation(api.seed.seedOrdersModule, configArgs);
+    await ctx.runMutation(api.seed.seedMediaModule, configArgs);
+    await ctx.runMutation(api.seed.seedCustomersModule, configArgs);
+    await ctx.runMutation(api.seed.seedWishlistModule, configArgs);
+    await ctx.runMutation(api.seed.seedCartModule, configArgs);
+    await ctx.runMutation(api.seed.seedUsersModule, configArgs);
+    await ctx.runMutation(api.seed.seedRolesModule, configArgs);
+    await ctx.runMutation(api.seed.seedSettingsModule, configArgs);
+    await ctx.runMutation(api.seed.seedMenusModule, configArgs);
+    await ctx.runMutation(api.seed.seedHomepageModule, configArgs);
+    await ctx.runMutation(api.seed.seedNotificationsModule, configArgs);
+    await ctx.runMutation(api.seed.seedPromotionsModule, configArgs);
+    await ctx.runMutation(api.seed.seedServicesModule, configArgs);
+    return null;
+  },
 });
