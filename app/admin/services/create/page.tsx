@@ -12,6 +12,7 @@ import { LexicalEditor } from '../../components/LexicalEditor';
 import { ImageUploader } from '../../components/ImageUploader';
 import { useFormShortcuts } from '../../components/useKeyboardShortcuts';
 import { QuickCreateServiceCategoryModal } from '../../components/QuickCreateServiceCategoryModal';
+import { stripHtml, truncateText } from '@/lib/seo';
 
 const MODULE_KEY = 'services';
 
@@ -85,14 +86,20 @@ export default function ServiceCreatePage() {
 
     setIsSubmitting(true);
     try {
+      const resolvedMetaTitle = truncateText(title.trim(), 60);
+      const resolvedMetaDescription = truncateText(stripHtml(excerpt || content || ''), 160);
       await createService({
         categoryId: categoryId as Id<"serviceCategories">,
         content,
         duration: duration.trim() || undefined,
         excerpt: excerpt.trim() || undefined,
         featured,
-        metaDescription: enabledFields.has('metaDescription') ? metaDescription.trim() || undefined : undefined,
-        metaTitle: enabledFields.has('metaTitle') ? metaTitle.trim() || undefined : undefined,
+        metaDescription: enabledFields.has('metaDescription')
+          ? (metaDescription.trim() || resolvedMetaDescription || undefined)
+          : undefined,
+        metaTitle: enabledFields.has('metaTitle')
+          ? (metaTitle.trim() || resolvedMetaTitle || undefined)
+          : undefined,
         price,
         slug: slug.trim() || title.toLowerCase().replaceAll(/\s+/g, '-'),
         status,

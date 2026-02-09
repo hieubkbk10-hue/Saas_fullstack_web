@@ -12,6 +12,7 @@ import { LexicalEditor } from '../../components/LexicalEditor';
 import { ImageUploader } from '../../components/ImageUploader';
 import { useFormShortcuts } from '../../components/useKeyboardShortcuts';
 import { QuickCreateCategoryModal } from '../../components/QuickCreateCategoryModal';
+import { stripHtml, truncateText } from '@/lib/seo';
 
 const MODULE_KEY = 'posts';
 
@@ -87,13 +88,19 @@ export default function PostCreatePage() {
 
     setIsSubmitting(true);
     try {
+      const resolvedMetaTitle = truncateText(title.trim(), 60);
+      const resolvedMetaDescription = truncateText(stripHtml(excerpt || content || ''), 160);
       await createPost({
         authorName: enabledFields.has('author_name') ? authorName.trim() || undefined : undefined,
         categoryId: categoryId as Id<"postCategories">,
         content,
         excerpt: excerpt.trim() || undefined,
-        metaDescription: enabledFields.has('metaDescription') ? metaDescription.trim() || undefined : undefined,
-        metaTitle: enabledFields.has('metaTitle') ? metaTitle.trim() || undefined : undefined,
+        metaDescription: enabledFields.has('metaDescription')
+          ? (metaDescription.trim() || resolvedMetaDescription || undefined)
+          : undefined,
+        metaTitle: enabledFields.has('metaTitle')
+          ? (metaTitle.trim() || resolvedMetaTitle || undefined)
+          : undefined,
         slug: slug.trim() || title.toLowerCase().replaceAll(/\s+/g, '-'),
         status,
         thumbnail,

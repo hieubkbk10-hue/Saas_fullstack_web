@@ -16,3 +16,15 @@ export const parseHreflang = (input?: string): Record<string, string> => {
       return acc;
     }, {});
 };
+
+export const stripHtml = (html: string): string => {
+  return html.replace(/<[^>]*>/g, '').trim();
+};
+
+export const truncateText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
+};

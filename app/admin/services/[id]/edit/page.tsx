@@ -12,6 +12,7 @@ import { LexicalEditor } from '../../../components/LexicalEditor';
 import { ImageUploader } from '../../../components/ImageUploader';
 import { useFormShortcuts } from '../../../components/useKeyboardShortcuts';
 import { QuickCreateServiceCategoryModal } from '../../../components/QuickCreateServiceCategoryModal';
+import { stripHtml, truncateText } from '@/lib/seo';
 
 const MODULE_KEY = 'services';
 
@@ -84,6 +85,8 @@ export default function ServiceEditPage({ params }: { params: Promise<{ id: stri
 
     setIsSubmitting(true);
     try {
+      const resolvedMetaTitle = truncateText(title.trim(), 60);
+      const resolvedMetaDescription = truncateText(stripHtml(excerpt || content || ''), 160);
       await updateService({
         categoryId: categoryId as Id<"serviceCategories">,
         content,
@@ -91,8 +94,12 @@ export default function ServiceEditPage({ params }: { params: Promise<{ id: stri
         excerpt: excerpt.trim() || undefined,
         featured,
         id: id as Id<"services">,
-        metaDescription: enabledFields.has('metaDescription') ? metaDescription.trim() || undefined : undefined,
-        metaTitle: enabledFields.has('metaTitle') ? metaTitle.trim() || undefined : undefined,
+        metaDescription: enabledFields.has('metaDescription')
+          ? (metaDescription.trim() || resolvedMetaDescription || undefined)
+          : undefined,
+        metaTitle: enabledFields.has('metaTitle')
+          ? (metaTitle.trim() || resolvedMetaTitle || undefined)
+          : undefined,
         price,
         slug: slug.trim(),
         status,

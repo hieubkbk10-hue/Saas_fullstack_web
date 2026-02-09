@@ -13,6 +13,7 @@ import { LexicalEditor } from '../../../components/LexicalEditor';
 import { ImageUpload } from '../../../components/ImageUpload';
 import { ModuleGuard } from '../../../components/ModuleGuard';
 import { DigitalCredentialsForm } from '@/components/orders/DigitalCredentialsForm';
+import { stripHtml, truncateText } from '@/lib/seo';
 
 const MODULE_KEY = 'products';
 
@@ -126,14 +127,20 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
     setIsSubmitting(true);
     try {
       const resolvedStock = productType === 'digital' ? 0 : (parseInt(stock) || 0);
+      const resolvedMetaTitle = truncateText(name.trim(), 60);
+      const resolvedMetaDescription = truncateText(stripHtml(description || ''), 160);
       await updateProduct({
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
         id: id as Id<"products">,
         hasVariants: variantEnabled ? hasVariants : undefined,
         image,
-        metaDescription: enabledFields.has('metaDescription') ? metaDescription.trim() || undefined : undefined,
-        metaTitle: enabledFields.has('metaTitle') ? metaTitle.trim() || undefined : undefined,
+        metaDescription: enabledFields.has('metaDescription')
+          ? (metaDescription.trim() || resolvedMetaDescription || undefined)
+          : undefined,
+        metaTitle: enabledFields.has('metaTitle')
+          ? (metaTitle.trim() || resolvedMetaTitle || undefined)
+          : undefined,
         name: name.trim(),
         optionIds: variantEnabled ? (hasVariants ? selectedOptionIds : []) : undefined,
         price: parseInt(price) || 0,
@@ -274,7 +281,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
                     /products/{slug || 'san-pham'}
                   </div>
                   <div className="text-slate-600 text-xs mt-1 line-clamp-2">
-                    {metaDescription.trim() || 'Mô tả ngắn sẽ hiển thị tại đây.'}
+                    {metaDescription.trim() || stripHtml(description || '') || 'Mô tả ngắn sẽ hiển thị tại đây.'}
                   </div>
                 </div>
               </CardContent>
