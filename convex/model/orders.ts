@@ -20,6 +20,17 @@ interface OrderItem {
   price: number;
   variantId?: Id<"productVariants">;
   variantTitle?: string;
+  isDigital?: boolean;
+  digitalDeliveryType?: string;
+  digitalCredentials?: {
+    username?: string;
+    password?: string;
+    licenseKey?: string;
+    downloadUrl?: string;
+    customContent?: string;
+    expiresAt?: number;
+    deliveredAt?: number;
+  };
 }
 
 /**
@@ -179,6 +190,7 @@ export async function create(
     promotionCode?: string;
     discountAmount?: number;
     status?: OrderStatus;
+    isDigitalOrder?: boolean;
   }
 ): Promise<Id<"orders">> {
   const orderNumber = generateOrderNumber();
@@ -201,6 +213,7 @@ export async function create(
     status: args.status ?? "Pending",
     subtotal,
     totalAmount,
+    isDigitalOrder: args.isDigitalOrder ?? false,
   });
 }
 
@@ -249,8 +262,39 @@ export async function updatePaymentStatus(
   ctx: MutationCtx,
   { id, paymentStatus }: { id: Id<"orders">; paymentStatus: PaymentStatus }
 ): Promise<void> {
-  await getByIdOrThrow(ctx, { id });
-  await ctx.db.patch(id, { paymentStatus });
+  const order = await getByIdOrThrow(ctx, { id });
+  const shouldAutoDeliver = paymentStatus === "Paid";
+
+  if (!shouldAutoDeliver) {
+    await ctx.db.patch(id, { paymentStatus });
+    return;
+  }
+
+  const setting = await ctx.db
+    .query("moduleSettings")
+    .withIndex("by_module_setting", (q) => q.eq("moduleKey", "orders").eq("settingKey", "digitalDeliveryMode"))
+    .unique();
+  const deliveryMode = (setting?.value as string) ?? "semi-auto";
+
+  if (deliveryMode !== "auto" && deliveryMode !== "semi-auto") {
+    await ctx.db.patch(id, { paymentStatus });
+    return;
+  }
+
+  const updatedItems = order.items.map((item) => {
+    if (!item.isDigital || !item.digitalCredentials || item.digitalCredentials.deliveredAt) {
+      return item;
+    }
+    return {
+      ...item,
+      digitalCredentials: {
+        ...item.digitalCredentials,
+        deliveredAt: Date.now(),
+      },
+    };
+  });
+
+  await ctx.db.patch(id, { paymentStatus, items: updatedItems });
 }
 
 /**

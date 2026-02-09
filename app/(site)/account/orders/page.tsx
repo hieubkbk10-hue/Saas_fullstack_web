@@ -13,6 +13,7 @@ import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { useBrandColor } from '@/components/site/hooks';
 import { StatusFilterDropdown } from '@/components/orders/StatusFilterDropdown';
 import { OrderDetailDrawer } from '@/components/orders/OrderDetailDrawer';
+import { DigitalCredentialsDisplay } from '@/components/orders/DigitalCredentialsDisplay';
 import { useAccountOrdersConfig, useOrderStatuses } from '@/lib/experiences';
 import { notifyAddToCart, useCart } from '@/lib/cart';
 
@@ -287,6 +288,13 @@ export default function AccountOrdersPage() {
     image: item.productImage,
     variantTitle: item.variantTitle,
   }));
+  const drawerDigitalItems = drawerOrder?.items
+    .filter((item) => item.isDigital && item.digitalCredentials?.deliveredAt)
+    .map((item) => ({
+      name: item.productName,
+      type: item.digitalDeliveryType ?? 'custom',
+      credentials: item.digitalCredentials!,
+    }));
 
   const toggleStatus = (status: string) => {
     setCurrentPage(1);
@@ -488,6 +496,24 @@ export default function AccountOrdersPage() {
                                     <div className="text-sm font-semibold text-slate-900">
                                       {formatPrice(item.price * item.quantity)}
                                     </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {order.items.some((item) => item.isDigital && item.digitalCredentials?.deliveredAt) && (
+                            <div>
+                              <div className="text-[10px] text-slate-500 mb-3 uppercase tracking-wide">Digital credentials</div>
+                              <div className="space-y-4">
+                                {order.items.filter((item) => item.isDigital && item.digitalCredentials?.deliveredAt).map((item, itemIndex) => (
+                                  <div key={`${item.productId}-digital-${itemIndex}`} className="space-y-2">
+                                    <div className="text-sm font-semibold text-slate-900">{item.productName}</div>
+                                    <DigitalCredentialsDisplay
+                                      type={item.digitalDeliveryType ?? 'custom'}
+                                      credentials={item.digitalCredentials!}
+                                      brandColor={brandColor}
+                                    />
                                   </div>
                                 ))}
                               </div>
@@ -697,6 +723,23 @@ export default function AccountOrdersPage() {
                           ))}
                         </div>
                       )}
+                      {order.items.some((item) => item.isDigital && item.digitalCredentials?.deliveredAt) && (
+                        <div className="space-y-3">
+                          <div className="text-xs font-semibold text-slate-500 uppercase">Digital credentials</div>
+                          <div className="space-y-4">
+                            {order.items.filter((item) => item.isDigital && item.digitalCredentials?.deliveredAt).map((item, itemIndex) => (
+                              <div key={`${item.productId}-digital-timeline-${itemIndex}`} className="space-y-2">
+                                <div className="text-sm font-semibold text-slate-900">{item.productName}</div>
+                                <DigitalCredentialsDisplay
+                                  type={item.digitalDeliveryType ?? 'custom'}
+                                  credentials={item.digitalCredentials!}
+                                  brandColor={brandColor}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -806,7 +849,9 @@ export default function AccountOrdersPage() {
             statusColor={drawerStatus?.color}
             totalLabel={drawerOrder ? formatPrice(drawerOrder.totalAmount) : ''}
             items={drawerItems}
+            digitalItems={drawerDigitalItems}
             showItems={config.showOrderItems}
+            showDigitalCredentials
             showTimeline={config.showTimeline}
             timelineStep={drawerStatus?.step ?? 1}
             timelineLabels={timelineLabels}

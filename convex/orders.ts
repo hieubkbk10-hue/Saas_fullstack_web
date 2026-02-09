@@ -62,6 +62,17 @@ const orderItemValidator = v.object({
   quantity: v.number(),
   variantId: v.optional(v.id("productVariants")),
   variantTitle: v.optional(v.string()),
+  isDigital: v.optional(v.boolean()),
+  digitalDeliveryType: v.optional(v.string()),
+  digitalCredentials: v.optional(v.object({
+    username: v.optional(v.string()),
+    password: v.optional(v.string()),
+    licenseKey: v.optional(v.string()),
+    downloadUrl: v.optional(v.string()),
+    customContent: v.optional(v.string()),
+    expiresAt: v.optional(v.number()),
+    deliveredAt: v.optional(v.number()),
+  })),
 });
 
 type VariantPricingSetting = "product" | "variant";
@@ -75,6 +86,17 @@ type OrderItemInput = {
   quantity: number;
   variantId?: Id<"productVariants">;
   variantTitle?: string;
+  isDigital?: boolean;
+  digitalDeliveryType?: string;
+  digitalCredentials?: {
+    username?: string;
+    password?: string;
+    licenseKey?: string;
+    downloadUrl?: string;
+    customContent?: string;
+    expiresAt?: number;
+    deliveredAt?: number;
+  };
 };
 
 async function getVariantSettings(ctx: MutationCtx): Promise<{
@@ -145,6 +167,11 @@ async function normalizeOrderItems(
       price,
       productImage: item.productImage ?? product.image ?? undefined,
       variantTitle,
+      isDigital: product.productType === "digital",
+      digitalDeliveryType: product.digitalDeliveryType ?? undefined,
+      digitalCredentials: product.productType === "digital"
+        ? (product.digitalCredentialsTemplate ?? undefined)
+        : undefined,
     };
   }));
 }
@@ -186,6 +213,7 @@ const orderDoc = v.object({
   subtotal: v.number(),
   totalAmount: v.number(),
   trackingNumber: v.optional(v.string()),
+  isDigitalOrder: v.optional(v.boolean()),
 });
 
 // ============================================================
@@ -504,11 +532,13 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const { variantPricing, variantStock } = await getVariantSettings(ctx);
     const normalizedItems = await normalizeOrderItems(ctx, args.items, variantPricing);
+    const isDigitalOrder = normalizedItems.some((item) => item.isDigital);
     const { statuses } = await getOrderStatusSettings(ctx);
     const defaultStatus = statuses[0]?.key ?? "Pending";
     const orderId = await OrdersModel.create(ctx, {
       ...args,
       items: normalizedItems,
+      isDigitalOrder,
       status: defaultStatus,
     });
 
@@ -551,6 +581,43 @@ export const updatePaymentStatus = mutation({
   args: { id: v.id("orders"), paymentStatus: paymentStatus },
   handler: async (ctx, args) => {
     await OrdersModel.updatePaymentStatus(ctx, args);
+    return null;
+  },
+  returns: v.null(),
+});
+
+export const deliverDigitalItem = mutation({
+  args: {
+    orderId: v.id("orders"),
+    itemIndex: v.number(),
+    credentials: v.object({
+      username: v.optional(v.string()),
+      password: v.optional(v.string()),
+      licenseKey: v.optional(v.string()),
+      downloadUrl: v.optional(v.string()),
+      customContent: v.optional(v.string()),
+      expiresAt: v.optional(v.number()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (args.itemIndex < 0 || args.itemIndex >= order.items.length) {
+      throw new Error("Invalid item index");
+    }
+
+    const updatedItems = [...order.items];
+    updatedItems[args.itemIndex] = {
+      ...updatedItems[args.itemIndex],
+      digitalCredentials: {
+        ...args.credentials,
+        deliveredAt: Date.now(),
+      },
+    };
+
+    await ctx.db.patch(args.orderId, { items: updatedItems });
     return null;
   },
   returns: v.null(),

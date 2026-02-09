@@ -19,6 +19,23 @@ const productDoc = v.object({
   optionIds: v.optional(v.array(v.id("productOptions"))),
   order: v.number(),
   price: v.number(),
+  productType: v.optional(v.union(v.literal("physical"), v.literal("digital"))),
+  digitalDeliveryType: v.optional(
+    v.union(
+      v.literal("account"),
+      v.literal("license"),
+      v.literal("download"),
+      v.literal("custom")
+    )
+  ),
+  digitalCredentialsTemplate: v.optional(v.object({
+    username: v.optional(v.string()),
+    password: v.optional(v.string()),
+    licenseKey: v.optional(v.string()),
+    downloadUrl: v.optional(v.string()),
+    customContent: v.optional(v.string()),
+    expiresAt: v.optional(v.number()),
+  })),
   salePrice: v.optional(v.number()),
   sales: v.number(),
   sku: v.string(),
@@ -209,6 +226,18 @@ export const getById = query({
   args: { id: v.id("products") },
   handler: async (ctx, args) => ctx.db.get(args.id),
   returns: v.union(productDoc, v.null()),
+});
+
+export const listByIds = query({
+  args: { ids: v.array(v.id("products")) },
+  handler: async (ctx, args) => {
+    if (args.ids.length === 0) {
+      return [];
+    }
+    const products = await Promise.all(args.ids.map((id) => ctx.db.get(id)));
+    return products.filter((product): product is Doc<"products"> => Boolean(product));
+  },
+  returns: v.array(productDoc),
 });
 
 export const getBySku = query({
@@ -662,6 +691,23 @@ export const create = mutation({
     hasVariants: v.optional(v.boolean()),
     image: v.optional(v.string()),
     images: v.optional(v.array(v.string())),
+    productType: v.optional(v.union(v.literal("physical"), v.literal("digital"))),
+    digitalDeliveryType: v.optional(
+      v.union(
+        v.literal("account"),
+        v.literal("license"),
+        v.literal("download"),
+        v.literal("custom")
+      )
+    ),
+    digitalCredentialsTemplate: v.optional(v.object({
+      username: v.optional(v.string()),
+      password: v.optional(v.string()),
+      licenseKey: v.optional(v.string()),
+      downloadUrl: v.optional(v.string()),
+      customContent: v.optional(v.string()),
+      expiresAt: v.optional(v.number()),
+    })),
     metaDescription: v.optional(v.string()),
     metaTitle: v.optional(v.string()),
     name: v.string(),
@@ -705,8 +751,12 @@ export const create = mutation({
     }
     const status = args.status ?? defaultStatus;
 
+    const productType = args.productType ?? "physical";
     const productId = await ctx.db.insert("products", {
       ...args,
+      productType,
+      digitalDeliveryType: productType === "digital" ? args.digitalDeliveryType : undefined,
+      digitalCredentialsTemplate: productType === "digital" ? args.digitalCredentialsTemplate : undefined,
       stock: args.stock ?? 0,
       status,
       sales: 0,
@@ -731,6 +781,23 @@ export const update = mutation({
     hasVariants: v.optional(v.boolean()),
     image: v.optional(v.string()),
     images: v.optional(v.array(v.string())),
+    productType: v.optional(v.union(v.literal("physical"), v.literal("digital"))),
+    digitalDeliveryType: v.optional(
+      v.union(
+        v.literal("account"),
+        v.literal("license"),
+        v.literal("download"),
+        v.literal("custom")
+      )
+    ),
+    digitalCredentialsTemplate: v.optional(v.object({
+      username: v.optional(v.string()),
+      password: v.optional(v.string()),
+      licenseKey: v.optional(v.string()),
+      downloadUrl: v.optional(v.string()),
+      customContent: v.optional(v.string()),
+      expiresAt: v.optional(v.number()),
+    })),
     name: v.optional(v.string()),
     metaDescription: v.optional(v.string()),
     metaTitle: v.optional(v.string()),
@@ -773,7 +840,27 @@ export const update = mutation({
       await updateStats(ctx, { new: args.status, old: product.status });
     }
 
-    await ctx.db.patch(id, updates);
+    const nextUpdates = {
+      ...updates,
+    } as typeof updates & {
+      productType?: "physical" | "digital";
+      digitalDeliveryType?: "account" | "license" | "download" | "custom";
+      digitalCredentialsTemplate?: {
+        username?: string;
+        password?: string;
+        licenseKey?: string;
+        downloadUrl?: string;
+        customContent?: string;
+        expiresAt?: number;
+      };
+    };
+
+    if (updates.productType === "physical") {
+      nextUpdates.digitalDeliveryType = undefined;
+      nextUpdates.digitalCredentialsTemplate = undefined;
+    }
+
+    await ctx.db.patch(id, nextUpdates);
     return null;
   },
   returns: v.null(),

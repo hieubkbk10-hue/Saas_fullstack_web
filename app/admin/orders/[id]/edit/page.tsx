@@ -10,6 +10,7 @@ import { ArrowLeft, CreditCard, Loader2, MapPin, Package, ShoppingBag, Truck, Us
 import { toast } from 'sonner';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { useOrderStatuses } from '@/lib/experiences';
+import { DigitalCredentialsForm } from '@/components/orders/DigitalCredentialsForm';
 
 const MODULE_KEY = 'orders';
 
@@ -39,6 +40,7 @@ export default function EditOrderPage() {
   const customerData = useQuery(api.customers.getById, orderData?.customerId ? { id: orderData.customerId } : "skip");
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const updateOrder = useMutation(api.orders.update);
+  const deliverDigitalItem = useMutation(api.orders.deliverDigitalItem);
   const { statuses: orderStatuses } = useOrderStatuses();
 
   const [status, setStatus] = useState('');
@@ -47,6 +49,14 @@ export default function EditOrderPage() {
   const [shippingAddress, setShippingAddress] = useState('');
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [digitalCredentials, setDigitalCredentials] = useState<Record<number, {
+    username?: string;
+    password?: string;
+    licenseKey?: string;
+    downloadUrl?: string;
+    customContent?: string;
+    expiresAt?: number;
+  }>>({});
 
   const isLoading = orderData === undefined || fieldsData === undefined;
 
@@ -73,6 +83,27 @@ export default function EditOrderPage() {
       setTrackingNumber(orderData.trackingNumber ?? '');
       setShippingAddress(orderData.shippingAddress ?? '');
       setNote(orderData.note ?? '');
+      const nextCredentials: Record<number, {
+        username?: string;
+        password?: string;
+        licenseKey?: string;
+        downloadUrl?: string;
+        customContent?: string;
+        expiresAt?: number;
+      }> = {};
+      orderData.items.forEach((item, index) => {
+        if (item.digitalCredentials) {
+          nextCredentials[index] = {
+            username: item.digitalCredentials.username,
+            password: item.digitalCredentials.password,
+            licenseKey: item.digitalCredentials.licenseKey,
+            downloadUrl: item.digitalCredentials.downloadUrl,
+            customContent: item.digitalCredentials.customContent,
+            expiresAt: item.digitalCredentials.expiresAt,
+          };
+        }
+      });
+      setDigitalCredentials(nextCredentials);
     }
   }, [orderData]);
 
@@ -98,6 +129,7 @@ export default function EditOrderPage() {
 
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleString('vi-VN');
+  const formatDateOnly = (timestamp?: number) => (timestamp ? new Date(timestamp).toLocaleDateString('vi-VN') : '');
 
   if (isLoading) {
     return (
@@ -163,17 +195,60 @@ export default function EditOrderPage() {
               <CardContent>
                 <div className="divide-y">
                   {orderData.items.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center">
-                          <Package size={16} className="text-slate-400" />
+                    <div key={index} className="py-3 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center">
+                            <Package size={16} className="text-slate-400" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{item.productName}</p>
+                            <p className="text-sm text-slate-500">{formatPrice(item.price)} x {item.quantity}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">{item.productName}</p>
-                          <p className="text-sm text-slate-500">{formatPrice(item.price)} x {item.quantity}</p>
-                        </div>
+                        <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
                       </div>
-                      <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
+
+                      {item.isDigital && (
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs font-semibold text-slate-600">Giao hàng Digital</div>
+                            {item.digitalCredentials?.deliveredAt ? (
+                              <Badge variant="success">Đã giao {formatDateOnly(item.digitalCredentials.deliveredAt)}</Badge>
+                            ) : (
+                              <Badge variant="secondary">Chưa giao</Badge>
+                            )}
+                          </div>
+                          {item.digitalDeliveryType && (
+                            <DigitalCredentialsForm
+                              type={item.digitalDeliveryType as 'account' | 'license' | 'download' | 'custom'}
+                              value={digitalCredentials[index] ?? {}}
+                              onChange={(value) => setDigitalCredentials((prev) => ({ ...prev, [index]: value }))}
+                            />
+                          )}
+                          <div className="flex justify-end">
+                            <Button
+                              type="button"
+                              variant="accent"
+                              disabled={isSubmitting || Boolean(item.digitalCredentials?.deliveredAt)}
+                              onClick={async () => {
+                                try {
+                                  await deliverDigitalItem({
+                                    orderId,
+                                    itemIndex: index,
+                                    credentials: digitalCredentials[index] ?? {},
+                                  });
+                                  toast.success('Đã giao credentials');
+                                } catch (error) {
+                                  toast.error(error instanceof Error ? error.message : 'Không thể giao credentials');
+                                }
+                              }}
+                            >
+                              Giao credentials
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

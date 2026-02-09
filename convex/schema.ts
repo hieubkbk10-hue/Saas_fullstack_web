@@ -285,6 +285,23 @@ export default defineSchema({
     // SEO fields
     metaTitle: v.optional(v.string()),
     metaDescription: v.optional(v.string()),
+    productType: v.optional(v.union(v.literal("physical"), v.literal("digital"))),
+    digitalDeliveryType: v.optional(
+      v.union(
+        v.literal("account"),
+        v.literal("license"),
+        v.literal("download"),
+        v.literal("custom")
+      )
+    ),
+    digitalCredentialsTemplate: v.optional(v.object({
+      username: v.optional(v.string()),
+      password: v.optional(v.string()),
+      licenseKey: v.optional(v.string()),
+      downloadUrl: v.optional(v.string()),
+      customContent: v.optional(v.string()),
+      expiresAt: v.optional(v.number()),
+    })),
   })
     .index("by_sku", ["sku"])
     .index("by_slug", ["slug"])
@@ -537,6 +554,17 @@ export default defineSchema({
         quantity: v.number(),
         variantId: v.optional(v.id("productVariants")),
         variantTitle: v.optional(v.string()),
+        isDigital: v.optional(v.boolean()),
+        digitalDeliveryType: v.optional(v.string()),
+        digitalCredentials: v.optional(v.object({
+          username: v.optional(v.string()),
+          password: v.optional(v.string()),
+          licenseKey: v.optional(v.string()),
+          downloadUrl: v.optional(v.string()),
+          customContent: v.optional(v.string()),
+          expiresAt: v.optional(v.number()),
+          deliveredAt: v.optional(v.number()),
+        })),
       })
     ),
     note: v.optional(v.string()),
@@ -569,6 +597,7 @@ export default defineSchema({
     subtotal: v.number(),
     totalAmount: v.number(),
     trackingNumber: v.optional(v.string()),
+    isDigitalOrder: v.optional(v.boolean()),
   })
     .index("by_orderNumber", ["orderNumber"])
     .index("by_customer", ["customerId"])

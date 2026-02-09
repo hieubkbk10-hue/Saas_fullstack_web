@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { X } from 'lucide-react';
+import { DigitalCredentialsDisplay } from '@/components/orders/DigitalCredentialsDisplay';
 
 type OrderDetailItem = {
   name: string;
@@ -22,7 +23,21 @@ type OrderDetailDrawerProps = {
   statusColor?: string;
   totalLabel: string;
   items?: OrderDetailItem[];
+  digitalItems?: Array<{
+    name: string;
+    type: string;
+    credentials: {
+      username?: string;
+      password?: string;
+      licenseKey?: string;
+      downloadUrl?: string;
+      customContent?: string;
+      expiresAt?: number;
+      deliveredAt?: number;
+    };
+  }>;
   showItems?: boolean;
+  showDigitalCredentials?: boolean;
   showTimeline?: boolean;
   timelineStep?: number;
   timelineLabels?: string[];
@@ -68,7 +83,9 @@ export function OrderDetailDrawer({
   statusColor,
   totalLabel,
   items,
+  digitalItems,
   showItems,
+  showDigitalCredentials,
   showTimeline,
   timelineStep,
   timelineLabels,
@@ -180,6 +197,24 @@ export function OrderDetailDrawer({
                       <div className="text-xs text-slate-500">Số lượng: {item.quantity}</div>
                     </div>
                     <div className="text-sm font-semibold text-slate-900">{item.priceLabel}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {showDigitalCredentials && digitalItems && digitalItems.length > 0 && (
+            <div className="space-y-3">
+              <div className="text-xs font-semibold text-slate-500 uppercase">Digital credentials</div>
+              <div className="space-y-4">
+                {digitalItems.map((item, index) => (
+                  <div key={`${item.name}-${index}`} className="space-y-2">
+                    <div className="text-sm font-semibold text-slate-900">{item.name}</div>
+                    <DigitalCredentialsDisplay
+                      type={item.type}
+                      credentials={item.credentials}
+                      brandColor={brandColor}
+                    />
                   </div>
                 ))}
               </div>

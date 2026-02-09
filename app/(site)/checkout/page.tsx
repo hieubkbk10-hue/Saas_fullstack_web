@@ -196,11 +196,6 @@ function CheckoutContent() {
   const isPaymentEnabled = checkoutConfig.showPaymentMethods && (paymentFeature?.enabled ?? true);
   const isPromotionEnabled = promotionsModule?.enabled ?? true;
 
-  useEffect(() => {
-    if (!shippingMethods.find((method) => method.id === shippingMethodId)) {
-      setShippingMethodId(shippingMethods[0]?.id ?? '');
-    }
-  }, [shippingMethods, shippingMethodId]);
 
   useEffect(() => {
     if (!paymentMethods.find((method) => method.id === paymentMethodId)) {
@@ -281,6 +276,45 @@ function CheckoutContent() {
     api.cart.listCartItems,
     fromCart && cart?._id ? { cartId: cart._id } : 'skip'
   );
+  const cartProductIds = useMemo(() => {
+    if (!fromCart || !cartItems) {
+      return [] as Id<'products'>[];
+    }
+    return Array.from(new Set(cartItems.map((item) => item.productId)));
+  }, [cartItems, fromCart]);
+  const cartProducts = useQuery(
+    api.products.listByIds,
+    cartProductIds.length > 0 ? { ids: cartProductIds } : 'skip'
+  );
+
+  const cartProductTypeMap = useMemo(() => {
+    return new Map(cartProducts?.map((product) => [product._id, product.productType ?? 'physical']) ?? []);
+  }, [cartProducts]);
+
+  const hasPhysicalItems = useMemo(() => {
+    if (fromCart) {
+      if (!cartItems || cartProducts === undefined) {
+        return true;
+      }
+      return cartItems.some((item) => (cartProductTypeMap.get(item.productId) ?? 'physical') !== 'digital');
+    }
+    if (!product) {
+      return true;
+    }
+    return (product.productType ?? 'physical') !== 'digital';
+  }, [cartItems, cartProductTypeMap, cartProducts, fromCart, product]);
+
+  const shouldCollectShipping = isShippingEnabled && hasPhysicalItems;
+
+  useEffect(() => {
+    if (!shouldCollectShipping) {
+      setShippingMethodId('');
+      return;
+    }
+    if (!shippingMethods.find((method) => method.id === shippingMethodId)) {
+      setShippingMethodId(shippingMethods[0]?.id ?? '');
+    }
+  }, [shippingMethods, shippingMethodId, shouldCollectShipping]);
 
   const selectedVariant = variants?.[0] ?? null;
   const optionIds = useMemo(() => {
@@ -371,7 +405,7 @@ function CheckoutContent() {
   const subtotal = unitPrice * quantity;
   const selectedShipping = shippingMethods.find((method) => method.id === shippingMethodId);
   const selectedPayment = paymentMethods.find((method) => method.id === paymentMethodId);
-  const shippingFee = isShippingEnabled ? (selectedShipping?.fee ?? 0) : 0;
+  const shippingFee = shouldCollectShipping ? (selectedShipping?.fee ?? 0) : 0;
 
   const totalAmount = fromCart ? (cart?.totalAmount ?? 0) : subtotal;
   const promotionResult = useQuery(
@@ -494,11 +528,13 @@ function CheckoutContent() {
     return parts.join(', ');
   }, [addressDetail, addressFormat, selectedDistrict, selectedProvinceName, selectedWard, shippingAddress]);
 
-  const isAddressValid = addressFormat === 'text'
-    ? Boolean(shippingAddress.trim())
-    : Boolean(addressDetail.trim() && selectedProvinceName && selectedWard && (addressFormat === '2-level' || selectedDistrict));
+  const isAddressValid = shouldCollectShipping
+    ? (addressFormat === 'text'
+      ? Boolean(shippingAddress.trim())
+      : Boolean(addressDetail.trim() && selectedProvinceName && selectedWard && (addressFormat === '2-level' || selectedDistrict)))
+    : true;
 
-  const wizardStepCount = 1 + (isShippingEnabled ? 1 : 0) + (isPaymentEnabled ? 1 : 0);
+  const wizardStepCount = 1 + (shouldCollectShipping ? 1 : 0) + (isPaymentEnabled ? 1 : 0);
 
   useEffect(() => {
     if (customer && !customerName) {
@@ -555,10 +591,12 @@ function CheckoutContent() {
         promotionId: appliedPromotion?.promotion?._id,
         promotionCode: appliedPromotion?.promotion?.code,
         discountAmount,
-        shippingMethodId: selectedShipping?.id,
-        shippingMethodLabel: selectedShipping?.label,
-        shippingAddress: `${customerName} | ${customerPhone} | ${resolvedAddress}`,
-        shippingFee,
+        shippingMethodId: shouldCollectShipping ? selectedShipping?.id : undefined,
+        shippingMethodLabel: shouldCollectShipping ? selectedShipping?.label : undefined,
+        shippingAddress: shouldCollectShipping
+          ? `${customerName} | ${customerPhone} | ${resolvedAddress}`
+          : `${customerName} | ${customerPhone}`,
+        shippingFee: shouldCollectShipping ? shippingFee : 0,
       });
       if (appliedPromotion?.promotion?._id) {
         await incrementPromotionUsage({ id: appliedPromotion.promotion._id });
@@ -689,7 +727,7 @@ function CheckoutContent() {
         { label: 'Thông tin', icon: MapPin },
         { label: 'Vận chuyển', icon: Truck },
         { label: 'Thanh toán', icon: CreditCard },
-      ].filter((step) => (step.label !== 'Vận chuyển' || isShippingEnabled) && (step.label !== 'Thanh toán' || isPaymentEnabled))
+      ].filter((step) => (step.label !== 'Vận chuyển' || shouldCollectShipping) && (step.label !== 'Thanh toán' || isPaymentEnabled))
         .map((step, index, arr) => (
           <React.Fragment key={step.label}>
             <div className="flex flex-col items-center">
@@ -715,7 +753,7 @@ function CheckoutContent() {
     <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
       <div className="flex items-center gap-2">
         <MapPin className="w-5 h-5" style={{ color: brandColor }} />
-        <h2 className="text-lg font-semibold text-slate-900">Thông tin giao hàng</h2>
+        <h2 className="text-lg font-semibold text-slate-900">{shouldCollectShipping ? 'Thông tin giao hàng' : 'Thông tin liên hệ'}</h2>
       </div>
       <div className="grid gap-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -734,7 +772,7 @@ function CheckoutContent() {
             onChange={(event) => setCustomerPhone(event.target.value)}
           />
         </div>
-        {addressFormat === 'text' ? (
+        {shouldCollectShipping && addressFormat === 'text' ? (
           <input
             type="text"
             placeholder="Địa chỉ giao hàng"
@@ -742,7 +780,7 @@ function CheckoutContent() {
             value={shippingAddress}
             onChange={(event) => setShippingAddress(event.target.value)}
           />
-        ) : (
+        ) : shouldCollectShipping ? (
           <div className="grid gap-3">
             <div className={`grid gap-3 ${addressFormat === '3-level' ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
               <select
@@ -795,12 +833,16 @@ function CheckoutContent() {
               onChange={(event) => setAddressDetail(event.target.value)}
             />
           </div>
+        ) : (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            Đơn hàng digital sẽ được gửi qua tài khoản của bạn sau khi thanh toán.
+          </div>
         )}
       </div>
     </div>
   );
 
-  const shippingOptionsCard = !isShippingEnabled ? null : (
+  const shippingOptionsCard = !shouldCollectShipping ? null : (
     <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
       <div className="flex items-center gap-2">
         <Truck className="w-5 h-5 text-slate-400" />
@@ -921,10 +963,12 @@ function CheckoutContent() {
             <span className="font-semibold text-emerald-600">-{formatPrice(discountAmount)}</span>
           </div>
         )}
-        <div className="flex items-center justify-between">
-          <span className="text-slate-500">Phí vận chuyển</span>
-          <span className="font-semibold text-slate-900">{formatPrice(shippingFee)}</span>
-        </div>
+        {shouldCollectShipping && (
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500">Phí vận chuyển</span>
+            <span className="font-semibold text-slate-900">{formatPrice(shippingFee)}</span>
+          </div>
+        )}
       </div>
       <div className="border-t border-slate-100 pt-3 flex items-center justify-between">
         <span className="text-sm text-slate-500">Tổng cộng</span>
@@ -987,7 +1031,7 @@ function CheckoutContent() {
 
   const wizardSteps = [
     { key: 'info', label: 'Thông tin khách hàng', content: shippingInfoCard },
-    ...(isShippingEnabled ? [{ key: 'shipping', label: 'Vận chuyển', content: shippingOptionsCard }] : []),
+    ...(shouldCollectShipping ? [{ key: 'shipping', label: 'Vận chuyển', content: shippingOptionsCard }] : []),
     ...(isPaymentEnabled ? [{ key: 'payment', label: 'Thanh toán', content: paymentMethodsCard }] : []),
   ];
 

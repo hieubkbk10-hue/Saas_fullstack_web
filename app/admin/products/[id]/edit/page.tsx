@@ -12,6 +12,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '
 import { LexicalEditor } from '../../../components/LexicalEditor';
 import { ImageUpload } from '../../../components/ImageUpload';
 import { ModuleGuard } from '../../../components/ModuleGuard';
+import { DigitalCredentialsForm } from '@/components/orders/DigitalCredentialsForm';
 
 const MODULE_KEY = 'products';
 
@@ -50,6 +51,16 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [hasVariants, setHasVariants] = useState(false);
   const [selectedOptionIds, setSelectedOptionIds] = useState<Id<'productOptions'>[]>([]);
+  const [productType, setProductType] = useState<'physical' | 'digital'>('physical');
+  const [digitalDeliveryType, setDigitalDeliveryType] = useState<'account' | 'license' | 'download' | 'custom'>('account');
+  const [digitalCredentialsTemplate, setDigitalCredentialsTemplate] = useState<{
+    username?: string;
+    password?: string;
+    licenseKey?: string;
+    downloadUrl?: string;
+    customContent?: string;
+    expiresAt?: number;
+  }>({});
 
   const enabledFields = useMemo(() => {
     const fields = new Set<string>();
@@ -59,6 +70,11 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
 
   const variantEnabled = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'variantEnabled');
+    return Boolean(setting?.value);
+  }, [settingsData]);
+
+  const digitalEnabled = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'enableDigitalProducts');
     return Boolean(setting?.value);
   }, [settingsData]);
 
@@ -78,6 +94,9 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
       setStatus(productData.status);
       setHasVariants(productData.hasVariants ?? false);
       setSelectedOptionIds(productData.optionIds ?? []);
+      setProductType(productData.productType ?? 'physical');
+      setDigitalDeliveryType(productData.digitalDeliveryType ?? 'account');
+      setDigitalCredentialsTemplate(productData.digitalCredentialsTemplate ?? {});
       setIsDataLoaded(true);
     }
   }, [productData, isDataLoaded]);
@@ -106,6 +125,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
 
     setIsSubmitting(true);
     try {
+      const resolvedStock = productType === 'digital' ? 0 : (parseInt(stock) || 0);
       await updateProduct({
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
@@ -121,7 +141,12 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
         sku: (sku.trim() || productData?.sku) ?? `SKU-${Date.now()}`,
         slug: slug.trim(),
         status,
-        stock: parseInt(stock) || 0,
+        stock: resolvedStock,
+        productType: digitalEnabled ? productType : undefined,
+        digitalDeliveryType: digitalEnabled && productType === 'digital' ? digitalDeliveryType : undefined,
+        digitalCredentialsTemplate: digitalEnabled && productType === 'digital' && Object.keys(digitalCredentialsTemplate).length > 0
+          ? digitalCredentialsTemplate
+          : undefined,
       });
       toast.success("Cập nhật sản phẩm thành công");
     } catch (error) {
@@ -271,7 +296,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
                   </div>
                 )}
               </div>
-              {enabledFields.has('stock') && (
+              {enabledFields.has('stock') && productType !== 'digital' && (
                 <div className="space-y-2">
                   <Label>Số lượng tồn kho</Label>
                   <Input type="number" value={stock} onChange={(e) =>{  setStock(e.target.value); }} placeholder="0" min="0" />
@@ -279,6 +304,64 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
               )}
             </CardContent>
           </Card>
+
+          {digitalEnabled && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Loại sản phẩm</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="productType"
+                      checked={productType === 'physical'}
+                      onChange={() => setProductType('physical')}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">Vật lý (cần giao hàng)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="productType"
+                      checked={productType === 'digital'}
+                      onChange={() => setProductType('digital')}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">Digital (giao qua mạng)</span>
+                  </label>
+                </div>
+
+                {productType === 'digital' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Loại giao hàng Digital</Label>
+                      <select
+                        value={digitalDeliveryType}
+                        onChange={(e) => setDigitalDeliveryType(e.target.value as 'account' | 'license' | 'download' | 'custom')}
+                        className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                      >
+                        <option value="account">Tài khoản (username/password)</option>
+                        <option value="license">License Key</option>
+                        <option value="download">File Download</option>
+                        <option value="custom">Tùy chỉnh</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Template Credentials (tùy chọn)</Label>
+                      <p className="text-xs text-slate-500">Nhập sẵn thông tin sẽ tự động giao khi xác nhận thanh toán</p>
+                      <DigitalCredentialsForm
+                        type={digitalDeliveryType}
+                        value={digitalCredentialsTemplate}
+                        onChange={setDigitalCredentialsTemplate}
+                      />
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {variantEnabled && (
             <Card>

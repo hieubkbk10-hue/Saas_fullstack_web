@@ -20,6 +20,7 @@ import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS } from '@/lib/orders/
     { key: 'address', label: 'Địa chỉ giao hàng' },
     { key: 'shipping', label: 'Vận chuyển' },
     { key: 'payment', label: 'Thanh toán' },
+    { key: 'digital', label: 'Giao hàng Digital' },
   ],
    
   settings: [
@@ -119,6 +120,18 @@ import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS } from '@/lib/orders/
         { value: 'qr_only', label: 'Chỉ QR' },
         { value: 'print', label: 'In ấn' },
       ],
+    },
+    {
+      key: 'digitalDeliveryMode',
+      label: 'Chế độ giao hàng Digital',
+      type: 'select',
+      default: 'semi-auto',
+      options: [
+        { value: 'auto', label: 'Tự động (Paid → hiển thị ngay)' },
+        { value: 'semi-auto', label: 'Bán tự động (Admin confirm → tự gửi)' },
+        { value: 'manual', label: 'Thủ công (Admin nhập credentials)' },
+      ],
+      group: 'digital',
     },
   ],
    

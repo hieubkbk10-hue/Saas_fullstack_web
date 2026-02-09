@@ -1,4 +1,4 @@
-import { DollarSign, Image, Tag, Box, Package, Layers } from 'lucide-react';
+import { DollarSign, Image, Tag, Box, Package, Layers, Download } from 'lucide-react';
 import { defineModule } from '../define-module';
  
 export const productsModule = defineModule({
@@ -99,11 +99,33 @@ export const productsModule = defineModule({
       group: 'variants',
       dependsOn: 'variantEnabled',
     },
+    {
+      key: 'enableDigitalProducts',
+      label: 'Bật sản phẩm Digital',
+      type: 'toggle',
+      default: false,
+      group: 'digital',
+    },
+    {
+      key: 'defaultDigitalDeliveryType',
+      label: 'Loại giao hàng mặc định',
+      type: 'select',
+      default: 'account',
+      options: [
+        { value: 'account', label: 'Tài khoản (username/password)' },
+        { value: 'license', label: 'License Key' },
+        { value: 'download', label: 'File Download' },
+        { value: 'custom', label: 'Tùy chỉnh' },
+      ],
+      group: 'digital',
+      dependsOn: 'enableDigitalProducts',
+    },
    ],
 
    settingGroups: [
      { key: 'general', label: 'Cài đặt chung' },
      { key: 'variants', label: 'Phiên bản sản phẩm', icon: Layers },
+     { key: 'digital', label: 'Sản phẩm Digital', icon: Download },
    ],
 
    conventionNote: 'Slug tự động từ tên. SKU phải unique. Trường price và status bắt buộc.',
