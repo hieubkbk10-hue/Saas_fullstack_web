@@ -1,7 +1,7 @@
 'use client';
 
 import type { DragEvent } from 'react';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -106,6 +106,7 @@ export function MultiImageUploader<T extends ImageItem>({
   emptyText = 'Chưa có ảnh nào',
   layout = 'horizontal',
 }: MultiImageUploaderProps<T>) {
+  const itemsRef = useRef(items);
   const [uploadingIds, setUploadingIds] = useState<Set<string | number>>(new Set());
   const [urlModeIds, setUrlModeIds] = useState<Set<string | number>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
@@ -118,6 +119,10 @@ export function MultiImageUploader<T extends ImageItem>({
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
   const saveImage = useMutation(api.storage.saveImage);
   const deleteImage = useMutation(api.storage.deleteImage);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
 
   const aspectClasses = {
     auto: 'min-h-[100px]',
@@ -179,7 +184,7 @@ export function MultiImageUploader<T extends ImageItem>({
         width: dimensions.width,
       });
 
-      onChange(items.map(item => 
+      onChange(itemsRef.current.map(item => 
         item.id === itemId 
           ? { ...item, [imageKey]: result.url ?? '', storageId } as T
           : item
@@ -196,7 +201,7 @@ export function MultiImageUploader<T extends ImageItem>({
         return next;
       });
     }
-  }, [generateUploadUrl, saveImage, folder, imageKey, items, onChange]);
+  }, [generateUploadUrl, saveImage, folder, imageKey, onChange]);
 
   const handleMultipleFiles = useCallback(async (files: FileList) => {
     const filesToUpload = [...files];
