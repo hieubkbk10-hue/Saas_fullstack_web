@@ -8,6 +8,7 @@ import type { Doc } from "./_generated/dataModel";
 const productDoc = v.object({
   _creationTime: v.number(),
   _id: v.id("products"),
+  affiliateLink: v.optional(v.string()),
   categoryId: v.id("productCategories"),
   description: v.optional(v.string()),
   hasVariants: v.optional(v.boolean()),
@@ -686,6 +687,7 @@ async function getNextOrder(ctx: MutationCtx): Promise<number> {
 
 export const create = mutation({
   args: {
+    affiliateLink: v.optional(v.string()),
     categoryId: v.id("productCategories"),
     description: v.optional(v.string()),
     hasVariants: v.optional(v.boolean()),
@@ -775,6 +777,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
+    affiliateLink: v.optional(v.string()),
     categoryId: v.optional(v.id("productCategories")),
     description: v.optional(v.string()),
     id: v.id("products"),

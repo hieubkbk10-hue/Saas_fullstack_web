@@ -18,6 +18,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 type ProductDetailStyle = 'classic' | 'modern' | 'minimal';
 type ModernHeroStyle = 'full' | 'split' | 'minimal';
 type MinimalContentWidth = 'narrow' | 'medium' | 'wide';
+type ProductsSaleMode = 'cart' | 'contact' | 'affiliate';
 
 type ClassicLayoutConfig = {
   showRating: boolean;
@@ -290,6 +291,7 @@ export default function ProductDetailPage({ params }: PageProps) {
   const commentsLikesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableLikes', moduleKey: 'comments' });
   const commentsRepliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
   const commentsSettings = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'comments' });
+  const saleModeSetting = useQuery(api.admin.modules.getModuleSetting, { moduleKey: 'products', settingKey: 'saleMode' });
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const toggleWishlist = useMutation(api.wishlist.toggle);
@@ -402,6 +404,13 @@ export default function ProductDetailPage({ params }: PageProps) {
       : 'skip'
   );
   const comments = useMemo(() => commentsPage?.page ?? [], [commentsPage?.page]);
+  const saleMode = useMemo<ProductsSaleMode>(() => {
+    const value = saleModeSetting?.value;
+    if (value === 'contact' || value === 'affiliate') {
+      return value;
+    }
+    return 'cart';
+  }, [saleModeSetting?.value]);
   const commentRepliesMap = useMemo(() => {
     const map = new Map<string, CommentData[]>();
     comments.forEach((comment) => {
@@ -466,6 +475,29 @@ export default function ProductDetailPage({ params }: PageProps) {
     }
     const variantParam = variantId ? `&variantId=${variantId}` : '';
     router.push(`/checkout?productId=${product._id}&quantity=${quantity}${variantParam}`);
+  };
+
+  const handlePrimaryAction = async (quantity: number, variantId?: Id<'productVariants'>) => {
+    if (!product) {
+      return;
+    }
+
+    if (saleMode === 'contact') {
+      router.push('/contact');
+      return;
+    }
+
+    if (saleMode === 'affiliate') {
+      const affiliateLink = (product as { affiliateLink?: string }).affiliateLink?.trim();
+      if (!affiliateLink) {
+        toast.error('Sản phẩm chưa có link affiliate');
+        return;
+      }
+      window.open(affiliateLink, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    await handleBuyNow(quantity, variantId);
   };
 
   const handleSubmitComment = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -559,6 +591,9 @@ export default function ProductDetailPage({ params }: PageProps) {
   };
 
   const canBuyNow = experienceConfig.showBuyNow && checkoutConfig.showBuyNow && (ordersModule?.enabled ?? false);
+  const canUseCartActions = saleMode === 'cart';
+  const buyNowLabel = saleMode === 'contact' ? 'Liên hệ' : 'Mua ngay';
+  const requireStockForBuyNow = saleMode === 'cart';
 
   const ratingSummary = useProductRatingSummary(product?._id, experienceConfig.showRating);
 
@@ -637,14 +672,16 @@ export default function ProductDetailPage({ params }: PageProps) {
           highlights={classicHighlights}
           highlightsEnabled={classicHighlightsEnabled}
           ratingSummary={ratingSummary}
-          showAddToCart={experienceConfig.showAddToCart}
+          showAddToCart={canUseCartActions ? experienceConfig.showAddToCart : false}
           showRating={experienceConfig.showRating}
           showWishlist={canUseWishlist}
-          showBuyNow={canBuyNow}
+          showBuyNow={canUseCartActions ? canBuyNow : true}
+          buyNowLabel={buyNowLabel}
+          requireStockForBuyNow={requireStockForBuyNow}
           isWishlisted={isWishlisted}
           onToggleWishlist={handleWishlistToggle}
           onAddToCart={handleAddToCart}
-          onBuyNow={handleBuyNow}
+          onBuyNow={handlePrimaryAction}
           commentsSection={commentsSection}
         />
       )}
@@ -657,15 +694,17 @@ export default function ProductDetailPage({ params }: PageProps) {
           variants={variants ?? []}
           variantOptions={variantOptions}
           ratingSummary={ratingSummary}
-          showAddToCart={experienceConfig.showAddToCart}
+          showAddToCart={canUseCartActions ? experienceConfig.showAddToCart : false}
           showRating={experienceConfig.showRating}
           showWishlist={canUseWishlist}
-          showBuyNow={canBuyNow}
+          showBuyNow={canUseCartActions ? canBuyNow : true}
+          buyNowLabel={buyNowLabel}
+          requireStockForBuyNow={requireStockForBuyNow}
           heroStyle={experienceConfig.heroStyle}
           isWishlisted={isWishlisted}
           onToggleWishlist={handleWishlistToggle}
           onAddToCart={handleAddToCart}
-          onBuyNow={handleBuyNow}
+          onBuyNow={handlePrimaryAction}
           commentsSection={commentsSection}
         />
       )}
@@ -678,15 +717,17 @@ export default function ProductDetailPage({ params }: PageProps) {
           variants={variants ?? []}
           variantOptions={variantOptions}
           ratingSummary={ratingSummary}
-          showAddToCart={experienceConfig.showAddToCart}
+          showAddToCart={canUseCartActions ? experienceConfig.showAddToCart : false}
           showRating={experienceConfig.showRating}
           showWishlist={canUseWishlist}
-          showBuyNow={canBuyNow}
+          showBuyNow={canUseCartActions ? canBuyNow : true}
+          buyNowLabel={buyNowLabel}
+          requireStockForBuyNow={requireStockForBuyNow}
           contentWidth={experienceConfig.contentWidth}
           isWishlisted={isWishlisted}
           onToggleWishlist={handleWishlistToggle}
           onAddToCart={handleAddToCart}
-          onBuyNow={handleBuyNow}
+          onBuyNow={handlePrimaryAction}
           commentsSection={commentsSection}
         />
       )}
@@ -696,6 +737,7 @@ export default function ProductDetailPage({ params }: PageProps) {
 
 interface ProductData {
   _id: Id<"products">;
+  affiliateLink?: string;
   name: string;
   slug: string;
   sku: string;
@@ -746,6 +788,8 @@ interface ExperienceBlocksProps {
   showRating: boolean;
   showWishlist: boolean;
   showBuyNow: boolean;
+  buyNowLabel: string;
+  requireStockForBuyNow: boolean;
   isWishlisted: boolean;
   onToggleWishlist: () => void;
   onAddToCart: (quantity: number, variantId?: Id<'productVariants'>) => void;
@@ -807,7 +851,7 @@ function RatingInline({ summary }: { summary: RatingSummary }) {
 // ====================================================================================
 // STYLE 1: CLASSIC - Standard e-commerce product page
 // ====================================================================================
-function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow, commentsSection }: ClassicStyleProps) {
+function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, buyNowLabel, requireStockForBuyNow, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow, commentsSection }: ClassicStyleProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<VariantSelectionMap>({});
@@ -861,6 +905,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, var
   const displayPrice = salePrice ?? basePrice;
   const stockValue = selectedVariant?.stock ?? product.stock;
   const inStock = !showStock || stockValue > 0;
+  const buyNowDisabled = requireStockForBuyNow && !inStock;
 
   return (
     <div className="min-h-screen bg-white">
@@ -982,12 +1027,12 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, var
                 )}
                 {showBuyNow && (
                   <button
-                    className={`py-3.5 px-8 rounded-xl font-semibold flex items-center justify-center gap-2 border transition-all ${inStock ? 'hover:bg-slate-50' : 'opacity-50 cursor-not-allowed'}`}
+                    className={`py-3.5 px-8 rounded-xl font-semibold flex items-center justify-center gap-2 border transition-all ${buyNowDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                     style={{ borderColor: brandColor, color: brandColor }}
-                    disabled={!inStock}
-                    onClick={() => { if (inStock) { onBuyNow(quantity, selectedVariant?._id); } }}
+                    disabled={buyNowDisabled}
+                    onClick={() => { if (!buyNowDisabled) { onBuyNow(quantity, selectedVariant?._id); } }}
                   >
-                    Mua ngay
+                    {buyNowLabel}
                   </button>
                 )}
               </div>
@@ -1046,7 +1091,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, var
 // ====================================================================================
 // STYLE 2: MODERN - Landing page style with hero
 // ====================================================================================
-function ModernStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, heroStyle, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow, commentsSection }: StyleProps & ExperienceBlocksProps & { heroStyle: ModernHeroStyle }) {
+function ModernStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, buyNowLabel, requireStockForBuyNow, heroStyle, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow, commentsSection }: StyleProps & ExperienceBlocksProps & { heroStyle: ModernHeroStyle }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<VariantSelectionMap>({});
@@ -1099,6 +1144,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, vari
   const displayPrice = salePrice ?? basePrice;
   const stockValue = selectedVariant?.stock ?? product.stock;
   const inStock = !showStock || stockValue > 0;
+  const buyNowDisabled = requireStockForBuyNow && !inStock;
   const maxQuantity = showStock ? Math.min(stockValue, 10) : 10;
 
   const heroContainerClass = heroStyle === 'full'
@@ -1303,12 +1349,12 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, vari
                 )}
                 {showBuyNow && (
                   <button
-                    className={`w-full h-12 text-base font-semibold border transition-all ${inStock ? 'hover:bg-slate-50' : 'opacity-50 cursor-not-allowed'}`}
+                    className={`w-full h-12 text-base font-semibold border transition-all ${buyNowDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                     style={{ borderColor: brandColor, color: brandColor }}
-                    disabled={!inStock}
-                    onClick={() => { if (inStock) { onBuyNow(quantity, selectedVariant?._id); } }}
+                    disabled={buyNowDisabled}
+                    onClick={() => { if (!buyNowDisabled) { onBuyNow(quantity, selectedVariant?._id); } }}
                   >
-                    Mua ngay
+                    {buyNowLabel}
                   </button>
                 )}
                 {showWishlist && (
@@ -1385,7 +1431,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, vari
 // ====================================================================================
 // STYLE 3: MINIMAL - Clean, focused design
 // ====================================================================================
-function MinimalStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, contentWidth, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow, commentsSection }: StyleProps & ExperienceBlocksProps & { contentWidth: MinimalContentWidth }) {
+function MinimalStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, buyNowLabel, requireStockForBuyNow, contentWidth, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow, commentsSection }: StyleProps & ExperienceBlocksProps & { contentWidth: MinimalContentWidth }) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<VariantSelectionMap>({});
 
@@ -1436,6 +1482,7 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields, var
   const displayPrice = salePrice ?? basePrice;
   const stockValue = selectedVariant?.stock ?? product.stock;
   const inStock = !showStock || stockValue > 0;
+  const buyNowDisabled = requireStockForBuyNow && !inStock;
 
   const contentWidthClass = contentWidth === 'narrow'
     ? 'max-w-4xl'
@@ -1547,12 +1594,12 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields, var
                 </div>
                 {showBuyNow && (
                   <button
-                    className={`h-12 uppercase tracking-wider text-xs font-medium border transition-colors ${inStock ? 'hover:bg-slate-50' : 'opacity-50 cursor-not-allowed'}`}
+                    className={`h-12 uppercase tracking-wider text-xs font-medium border transition-colors ${buyNowDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                     style={{ borderColor: '#0f172a', color: '#0f172a' }}
-                    disabled={!inStock}
-                    onClick={() => { if (inStock) { onBuyNow(1, selectedVariant?._id); } }}
+                    disabled={buyNowDisabled}
+                    onClick={() => { if (!buyNowDisabled) { onBuyNow(1, selectedVariant?._id); } }}
                   >
-                    Mua ngay
+                    {buyNowLabel}
                   </button>
                 )}
               </div>

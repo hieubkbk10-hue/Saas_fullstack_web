@@ -121,6 +121,7 @@ function ProductCreateContent() {
   const [price, setPrice] = useState('');
   const [salePrice, setSalePrice] = useState('');
   const [stock, setStock] = useState('0');
+  const [affiliateLink, setAffiliateLink] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
   const [metaTitle, setMetaTitle] = useState('');
@@ -170,6 +171,17 @@ function ProductCreateContent() {
     return (setting?.value as 'account' | 'license' | 'download' | 'custom') ?? 'account';
   }, [settingsData]);
 
+  const saleMode = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'saleMode');
+    const value = setting?.value;
+    if (value === 'contact' || value === 'affiliate') {
+      return value;
+    }
+    return 'cart';
+  }, [settingsData]);
+
+  const isAffiliateMode = saleMode === 'affiliate';
+
   useEffect(() => {
     if (defaultStatus) {
       setStatus(defaultStatus as 'Draft' | 'Active' | 'Archived');
@@ -187,6 +199,12 @@ function ProductCreateContent() {
       setSelectedOptionIds([]);
     }
   }, [hasVariants]);
+
+  useEffect(() => {
+    if (!isAffiliateMode) {
+      setAffiliateLink('');
+    }
+  }, [isAffiliateMode]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -211,6 +229,10 @@ function ProductCreateContent() {
       toast.error('Vui lòng chọn ít nhất một tùy chọn cho phiên bản');
       return;
     }
+    if (isAffiliateMode && !affiliateLink.trim()) {
+      toast.error('Vui lòng nhập link affiliate cho sản phẩm');
+      return;
+    }
     // SKU required only if field is enabled
     if (enabledFields.has('sku') && !sku.trim()) {
       toast.error('Vui lòng nhập mã SKU');
@@ -224,6 +246,7 @@ function ProductCreateContent() {
       const resolvedMetaDescription = truncateText(stripHtml(description || ''), 160);
       const resolvedImages = galleryItems.map(item => item.url).filter(Boolean);
       await createProduct({
+        ...(isAffiliateMode ? { affiliateLink: affiliateLink.trim() || undefined } : {}),
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
         hasVariants: variantEnabled ? hasVariants : false,
@@ -372,6 +395,19 @@ function ProductCreateContent() {
                 <div className="space-y-2">
                   <Label>Số lượng tồn kho</Label>
                   <Input type="number" value={stock} onChange={(e) =>{  setStock(e.target.value); }} placeholder="0" min="0" />
+                </div>
+              )}
+              {isAffiliateMode && (
+                <div className="space-y-2">
+                  <Label>Link Affiliate <span className="text-red-500">*</span></Label>
+                  <Input
+                    type="url"
+                    value={affiliateLink}
+                    onChange={(e) => { setAffiliateLink(e.target.value); }}
+                    placeholder="https://..."
+                    required
+                  />
+                  <p className="text-xs text-slate-500">Nút “Mua ngay” trên frontend sẽ mở link này.</p>
                 </div>
               )}
             </CardContent>

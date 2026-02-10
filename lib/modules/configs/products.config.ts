@@ -28,6 +28,17 @@ export const productsModule = defineModule({
         { value: 'Active', label: 'Đang bán' },
       ],
     },
+    {
+      key: 'saleMode',
+      label: 'Chế độ bán hàng',
+      type: 'select',
+      default: 'cart',
+      options: [
+        { value: 'cart', label: 'Giỏ hàng & thanh toán' },
+        { value: 'contact', label: 'Nút liên hệ (/contact)' },
+        { value: 'affiliate', label: 'Nút Affiliate (Mua ngay)' },
+      ],
+    },
     { key: 'lowStockThreshold', label: 'Ngưỡng tồn kho thấp', type: 'number', default: 10 },
     {
       key: 'variantEnabled',

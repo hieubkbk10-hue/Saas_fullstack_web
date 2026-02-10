@@ -279,6 +279,7 @@ export default defineSchema({
     images: v.optional(v.array(v.string())),
     sales: v.number(),
     description: v.optional(v.string()),
+    affiliateLink: v.optional(v.string()),
     order: v.number(),
     hasVariants: v.optional(v.boolean()),
     optionIds: v.optional(v.array(v.id("productOptions"))),

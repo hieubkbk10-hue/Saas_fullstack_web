@@ -44,6 +44,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
   const [price, setPrice] = useState('');
   const [salePrice, setSalePrice] = useState('');
   const [stock, setStock] = useState('0');
+  const [affiliateLink, setAffiliateLink] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
   const [metaTitle, setMetaTitle] = useState('');
@@ -82,6 +83,17 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
     return Boolean(setting?.value);
   }, [settingsData]);
 
+  const saleMode = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'saleMode');
+    const value = setting?.value;
+    if (value === 'contact' || value === 'affiliate') {
+      return value;
+    }
+    return 'cart';
+  }, [settingsData]);
+
+  const isAffiliateMode = saleMode === 'affiliate';
+
   useEffect(() => {
     if (productData && !isDataLoaded) {
       setName(productData.name);
@@ -90,6 +102,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
       setPrice(productData.price.toString());
       setSalePrice(productData.salePrice?.toString() ?? '');
       setStock(productData.stock.toString());
+      setAffiliateLink(((productData as { affiliateLink?: string }).affiliateLink ?? '').toString());
       setCategoryId(productData.categoryId);
       setDescription(productData.description ?? '');
       setMetaTitle(productData.metaTitle ?? '');
@@ -112,6 +125,12 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
     }
   }, [hasVariants]);
 
+  useEffect(() => {
+    if (!isAffiliateMode) {
+      setAffiliateLink('');
+    }
+  }, [isAffiliateMode]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -121,6 +140,10 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
     }
     if (enabledFields.has('sku') && !sku.trim()) {
       toast.error('Vui lòng nhập mã SKU');
+      return;
+    }
+    if (isAffiliateMode && !affiliateLink.trim()) {
+      toast.error('Vui lòng nhập link affiliate cho sản phẩm');
       return;
     }
     if (variantEnabled && hasVariants && selectedOptionIds.length === 0) {
@@ -135,6 +158,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
       const resolvedMetaDescription = truncateText(stripHtml(description || ''), 160);
       const resolvedImages = galleryItems.map(item => item.url).filter(Boolean);
       await updateProduct({
+        ...(isAffiliateMode ? { affiliateLink: affiliateLink.trim() || undefined } : {}),
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
         id: id as Id<"products">,
@@ -324,6 +348,19 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
                 <div className="space-y-2">
                   <Label>Số lượng tồn kho</Label>
                   <Input type="number" value={stock} onChange={(e) =>{  setStock(e.target.value); }} placeholder="0" min="0" />
+                </div>
+              )}
+              {isAffiliateMode && (
+                <div className="space-y-2">
+                  <Label>Link Affiliate <span className="text-red-500">*</span></Label>
+                  <Input
+                    type="url"
+                    value={affiliateLink}
+                    onChange={(e) => { setAffiliateLink(e.target.value); }}
+                    placeholder="https://..."
+                    required
+                  />
+                  <p className="text-xs text-slate-500">Nút “Mua ngay” trên frontend sẽ mở link này.</p>
                 </div>
               )}
             </CardContent>
