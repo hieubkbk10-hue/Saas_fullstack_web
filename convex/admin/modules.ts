@@ -178,7 +178,7 @@ export const toggleModuleWithCascade = mutation({
       .query("adminModules")
       .withIndex("by_key", (q) => q.eq("key", args.key))
       .unique();
-    if (!moduleRecord) {throw new Error("Module not found");}
+    if (!moduleRecord) {return { disabledModules: [], success: false };}
     if (moduleRecord.isCore && !args.enabled) {
       throw new Error("Cannot disable core module");
     }

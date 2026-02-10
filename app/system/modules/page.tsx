@@ -586,7 +586,11 @@ export default function ModuleManagementPage() {
         enabled: false,
         key: moduleKey,
       });
-      
+      if (!result.success) {
+        toast.error('Module không tồn tại hoặc đã bị xóa');
+        return;
+      }
+
       if (result.disabledModules.length > 0) {
         toast.success(`Đã tắt ${moduleKey} và ${result.disabledModules.length} modules phụ thuộc`);
       }
