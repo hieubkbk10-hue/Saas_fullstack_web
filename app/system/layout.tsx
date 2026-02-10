@@ -14,6 +14,7 @@ import {
   type LucideIcon,
   Menu,
   Moon,
+  ExternalLink,
   Search,
   Shield,
   Sun,
@@ -260,6 +261,16 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
             >
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
+
+            <a
+              href="/admin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+              title="Mở trang Admin"
+            >
+              <ExternalLink size={18} />
+            </a>
             
             <UserMenu />
           </div>
