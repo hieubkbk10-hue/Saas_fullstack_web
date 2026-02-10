@@ -27,7 +27,7 @@ export type VariantPresetExample = {
   label: string;
 };
 
-const CORE_MODULES = ['settings', 'menus', 'homepage', 'media', 'users', 'roles'];
+const CORE_MODULES = ['settings', 'menus', 'homepage', 'media', 'users', 'roles', 'analytics'];
 
 export const WEBSITE_TYPE_OPTIONS: WebsiteTypeOption[] = [
   {

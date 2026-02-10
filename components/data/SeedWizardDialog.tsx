@@ -113,6 +113,7 @@ export function SeedWizardDialog({ open, onOpenChange, onComplete }: SeedWizardD
   const productsRef = useRef(productsList ?? []);
 
   const seedBulk = useMutation(api.seedManager.seedBulk);
+  const seedModule = useMutation(api.seedManager.seedModule);
   const clearAll = useMutation(api.seedManager.clearAll);
   const setModuleSetting = useMutation(api.admin.modules.setModuleSetting);
   const toggleModuleFeature = useMutation(api.admin.modules.toggleModuleFeature);
@@ -361,6 +362,8 @@ export function SeedWizardDialog({ open, onOpenChange, onComplete }: SeedWizardD
     try {
       if (state.clearBeforeSeed) {
         await clearAll({ excludeSystem: false });
+        await seedModule({ module: 'adminModules', quantity: 0 });
+        await seedModule({ module: 'systemPresets', quantity: 0 });
       }
 
       await syncModules(selectedModules);
