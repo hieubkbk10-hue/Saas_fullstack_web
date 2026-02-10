@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
         hostname: 'picsum.photos',
         protocol: 'https',
       },
+      {
+        hostname: 'api.dicebear.com',
+        protocol: 'https',
+      },
     ],
   },
 };
