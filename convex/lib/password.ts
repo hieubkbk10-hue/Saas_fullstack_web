@@ -17,7 +17,7 @@ export function legacyHashPassword(password: string): string {
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, BCRYPT_ROUNDS);
+  return bcrypt.hashSync(password, BCRYPT_ROUNDS);
 }
 
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
@@ -25,5 +25,5 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   if (hashedPassword.startsWith(LEGACY_PREFIX)) {
     return legacyHashPassword(password) === hashedPassword;
   }
-  return bcrypt.compare(password, hashedPassword);
+  return bcrypt.compareSync(password, hashedPassword);
 }
