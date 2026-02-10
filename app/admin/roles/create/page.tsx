@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldOff } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
+import { useAdminAuth } from '../../auth/context';
 
 const MODULE_KEY = 'roles';
 
@@ -20,6 +21,34 @@ const actionLabels: Record<string, string> = {
 };
 
 export default function RoleCreatePage() {
+  const { hasPermission, isLoading: isAuthLoading, token } = useAdminAuth();
+  const canCreate = hasPermission(MODULE_KEY, 'create');
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (!canCreate) {
+    return (
+      <Card className="max-w-4xl mx-auto p-8 text-center">
+        <ShieldOff size={40} className="mx-auto text-slate-400 mb-4" />
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Không có quyền truy cập</h2>
+        <p className="text-slate-500 mt-2">Bạn không có quyền tạo vai trò mới.</p>
+        <div className="mt-6">
+          <Link href="/admin/roles"><Button>Quay lại danh sách</Button></Link>
+        </div>
+      </Card>
+    );
+  }
+
+  return <RoleCreateForm token={token} />;
+}
+
+function RoleCreateForm({ token }: { token: string | null }) {
   const router = useRouter();
   
   const modulesData = useQuery(api.admin.modules.listModules);
@@ -92,6 +121,10 @@ export default function RoleCreatePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {return;}
+    if (!token) {
+      toast.error('Thiếu token xác thực');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -101,6 +134,7 @@ export default function RoleCreatePage() {
         isSystem: false,
         name: name.trim(),
         permissions,
+        token,
       });
       toast.success('Đã tạo vai trò mới');
       router.push('/admin/roles');

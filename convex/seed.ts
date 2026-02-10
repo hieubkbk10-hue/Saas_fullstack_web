@@ -4,6 +4,9 @@ import { action, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { seedPresetProductOptions } from "./seeders/productOptions.seeder";
 import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS } from "../lib/orders/statuses";
+import { hashPassword } from "./lib/password";
+
+const DEFAULT_USER_PASSWORD = process.env.SEED_USER_PASSWORD ?? "Admin@123";
 
 export const seedModules = mutation({
   args: {},
@@ -199,9 +202,11 @@ export const seedPostsModule = mutation({
       // 2. Seed users if not exist
       const adminUser = await ctx.db.query("users").withIndex("by_email", q => q.eq("email", "admin@example.com")).first();
       if (!adminUser) {
+        const passwordHash = await hashPassword(DEFAULT_USER_PASSWORD);
         await ctx.db.insert("users", {
           email: "admin@example.com",
           name: "Admin User",
+          passwordHash,
           roleId: adminRoleId,
           status: "Active",
         });
@@ -1717,13 +1722,14 @@ export const seedUsersModule = mutation({
       // 3. Seed users if not exist
       const existingUsers = await ctx.db.query("users").first();
       if (!existingUsers && superAdminRole && adminRole && editorRole && moderatorRole) {
+        const defaultPasswordHash = await hashPassword(DEFAULT_USER_PASSWORD);
         const users = [
-          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=superadmin", email: "superadmin@example.com", lastLogin: Date.now() - 3_600_000, name: "Super Admin", phone: "0901234567", roleId: superAdminRole._id, status: "Active" as const },
-          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin", email: "admin@example.com", lastLogin: Date.now() - 7_200_000, name: "Admin User", phone: "0912345678", roleId: adminRole._id, status: "Active" as const },
-          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=editor", email: "editor@example.com", lastLogin: Date.now() - 86_400_000, name: "Nguyễn Văn Editor", phone: "0923456789", roleId: editorRole._id, status: "Active" as const },
-          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=mod", email: "mod@example.com", name: "Trần Thị Moderator", phone: "0934567890", roleId: moderatorRole._id, status: "Active" as const },
-          { email: "test@example.com", name: "Lê Văn Test", phone: "0945678901", roleId: editorRole._id, status: "Inactive" as const },
-          { email: "banned@example.com", name: "Banned User", roleId: moderatorRole._id, status: "Banned" as const },
+          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=superadmin", email: "superadmin@example.com", lastLogin: Date.now() - 3_600_000, name: "Super Admin", passwordHash: defaultPasswordHash, phone: "0901234567", roleId: superAdminRole._id, status: "Active" as const },
+          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin", email: "admin@example.com", lastLogin: Date.now() - 7_200_000, name: "Admin User", passwordHash: defaultPasswordHash, phone: "0912345678", roleId: adminRole._id, status: "Active" as const },
+          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=editor", email: "editor@example.com", lastLogin: Date.now() - 86_400_000, name: "Nguyễn Văn Editor", passwordHash: defaultPasswordHash, phone: "0923456789", roleId: editorRole._id, status: "Active" as const },
+          { avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=mod", email: "mod@example.com", name: "Trần Thị Moderator", passwordHash: defaultPasswordHash, phone: "0934567890", roleId: moderatorRole._id, status: "Active" as const },
+          { email: "test@example.com", name: "Lê Văn Test", passwordHash: defaultPasswordHash, phone: "0945678901", roleId: editorRole._id, status: "Inactive" as const },
+          { email: "banned@example.com", name: "Banned User", passwordHash: defaultPasswordHash, roleId: moderatorRole._id, status: "Banned" as const },
         ];
         for (const user of users) {
           await ctx.db.insert("users", user);

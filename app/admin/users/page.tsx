@@ -5,15 +5,19 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronDown, Edit, Plus, Search, Trash2 } from 'lucide-react';
+import type { Doc, Id } from '@/convex/_generated/dataModel';
+import { ChevronDown, Edit, Loader2, Plus, Search, ShieldOff, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, generatePaginationItems, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
+import { useAdminAuth } from '../auth/context';
 
 const MODULE_KEY = 'users';
+
+type AdminUser = Omit<Doc<"users">, "passwordHash">;
+type AdminUserWithRole = AdminUser & { roleColor?: string; roleName: string };
 
 export default function UsersListPage() {
   return (
@@ -24,6 +28,54 @@ export default function UsersListPage() {
 }
 
 function UsersContent() {
+  const { hasPermission, isLoading, token } = useAdminAuth();
+  const canView = hasPermission(MODULE_KEY, 'view');
+  const canCreate = hasPermission(MODULE_KEY, 'create');
+  const canEdit = hasPermission(MODULE_KEY, 'edit');
+  const canDelete = hasPermission(MODULE_KEY, 'delete');
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (!canView) {
+    return (
+      <Card className="p-8 text-center">
+        <ShieldOff size={40} className="mx-auto text-slate-400 mb-4" />
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Không có quyền truy cập</h2>
+        <p className="text-slate-500 mt-2">Bạn không có quyền xem module Người dùng.</p>
+        <div className="mt-6">
+          <Link href="/admin/dashboard"><Button>Quay lại Dashboard</Button></Link>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <UsersTable
+      canCreate={canCreate}
+      canDelete={canDelete}
+      canEdit={canEdit}
+      token={token}
+    />
+  );
+}
+
+function UsersTable({
+  canCreate,
+  canDelete,
+  canEdit,
+  token,
+}: {
+  canCreate: boolean;
+  canDelete: boolean;
+  canEdit: boolean;
+  token: string | null;
+}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<Id<"roles"> | ''>('');
@@ -52,13 +104,19 @@ function UsersContent() {
   });
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState<'Active' | 'Inactive' | 'Banned'>('Active');
+  const [isBulkStatusUpdating, setIsBulkStatusUpdating] = useState(false);
+  const [exportRequested, setExportRequested] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const isSelectAllActive = selectionMode === 'all';
+  const selectionEnabled = canDelete || canEdit;
 
   const rolesData = useQuery(api.roles.listAll);
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const deleteUser = useMutation(api.users.remove);
   const bulkDeleteUsers = useMutation(api.users.bulkRemove);
+  const bulkStatusChange = useMutation(api.users.bulkStatusChange);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -86,13 +144,67 @@ function UsersContent() {
     roleId: filterRole || undefined,
     search: resolvedSearch,
     status: filterStatus || undefined,
-  });
+  }) as AdminUser[] | undefined;
 
   const totalCountData = useQuery(api.users.countAdmin, {
     roleId: filterRole || undefined,
     search: resolvedSearch,
     status: filterStatus || undefined,
   });
+
+  const exportData = useQuery(
+    api.users.listAdminExport,
+    exportRequested
+      ? {
+          limit: 5000,
+          roleId: filterRole || undefined,
+          search: resolvedSearch,
+          status: filterStatus || undefined,
+        }
+      : 'skip'
+  ) as AdminUser[] | undefined;
+
+  useEffect(() => {
+    if (!exportRequested || exportData === undefined) {return;}
+    if (!exportData.length) {
+      toast.error('Không có dữ liệu để xuất CSV');
+      setExportRequested(false);
+      setIsExporting(false);
+      return;
+    }
+
+    const roleMap = new Map(rolesData?.map(role => [role._id, role.name]));
+    const statusLabels: Record<string, string> = {
+      Active: 'Hoạt động',
+      Banned: 'Bị cấm',
+      Inactive: 'Không hoạt động',
+    };
+
+    const rows: string[][] = exportData.map(user => [
+      user.name,
+      user.email,
+      user.phone ?? '',
+      roleMap.get(user.roleId) ?? 'Không rõ',
+      statusLabels[user.status] ?? user.status,
+      user.lastLogin ? new Date(user.lastLogin).toLocaleString('vi-VN') : '',
+    ]);
+
+    const header = ['Họ tên', 'Email', 'Số điện thoại', 'Vai trò', 'Trạng thái', 'Đăng nhập cuối'];
+    const csv = [header, ...rows]
+      .map(row => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    setExportRequested(false);
+    setIsExporting(false);
+  }, [exportRequested, exportData, rolesData]);
 
   const deleteInfo = useQuery(
     api.users.getDeleteInfo,
@@ -101,7 +213,7 @@ function UsersContent() {
 
   const selectAllData = useQuery(
     api.users.listAdminIds,
-    isSelectAllActive
+    selectionEnabled && isSelectAllActive
       ? {
           roleId: filterRole || undefined,
           search: resolvedSearch,
@@ -145,7 +257,7 @@ function UsersContent() {
     return map;
   }, [rolesData]);
 
-  const users = useMemo(() => usersData?.map(user => ({
+  const users = useMemo<AdminUserWithRole[]>(() => usersData?.map(user => ({
     ...user,
     roleName: roleMap[user.roleId]?.name || 'N/A',
     roleColor: roleMap[user.roleId]?.color,
@@ -156,9 +268,11 @@ function UsersContent() {
   const totalCount = totalCountData?.count ?? 0;
   const totalPages = totalCount ? Math.ceil(totalCount / resolvedUsersPerPage) : 1;
   const paginatedUsers = sortedUsers;
-  const tableColumnCount = resolvedVisibleColumns.length + 3;
-  const selectedIds = isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
-  const isSelectingAll = isSelectAllActive && selectAllData === undefined;
+  const showActions = canEdit || canDelete;
+  const tableColumnCount = resolvedVisibleColumns.length + 1 + (selectionEnabled ? 1 : 0) + (showActions ? 1 : 0);
+  const selectedIds = selectionEnabled && isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
+  const resolvedSelectedIds = selectionEnabled ? selectedIds : [];
+  const isSelectingAll = selectionEnabled && isSelectAllActive && selectAllData === undefined;
 
   const applyManualSelection = (nextIds: Id<"users">[]) => {
     setSelectionMode('manual');
@@ -192,38 +306,45 @@ function UsersContent() {
     applyManualSelection([]);
   };
 
-  const selectedOnPage = paginatedUsers.filter(user => selectedIds.includes(user._id));
-  const isPageSelected = paginatedUsers.length > 0 && selectedOnPage.length === paginatedUsers.length;
-  const isPageIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < paginatedUsers.length;
+  const selectedOnPage = paginatedUsers.filter(user => resolvedSelectedIds.includes(user._id));
+  const isPageSelected = selectionEnabled && paginatedUsers.length > 0 && selectedOnPage.length === paginatedUsers.length;
+  const isPageIndeterminate = selectionEnabled && selectedOnPage.length > 0 && selectedOnPage.length < paginatedUsers.length;
 
   const toggleSelectAll = () => {
+    if (!selectionEnabled) {return;}
     if (isPageSelected) {
-      const remaining = selectedIds.filter(id => !paginatedUsers.some(user => user._id === id));
+      const remaining = resolvedSelectedIds.filter(id => !paginatedUsers.some(user => user._id === id));
       applyManualSelection(remaining);
       return;
     }
-    const next = new Set(selectedIds);
+    const next = new Set(resolvedSelectedIds);
     paginatedUsers.forEach(user => next.add(user._id));
     applyManualSelection(Array.from(next));
   };
 
   const toggleSelectItem = (id: Id<"users">) => {
-    const next = selectedIds.includes(id)
-      ? selectedIds.filter(i => i !== id)
-      : [...selectedIds, id];
+    if (!selectionEnabled) {return;}
+    const next = resolvedSelectedIds.includes(id)
+      ? resolvedSelectedIds.filter(i => i !== id)
+      : [...resolvedSelectedIds, id];
     applyManualSelection(next);
   };
 
   const handleDelete = async (id: Id<"users">) => {
+    if (!canDelete) {return;}
     setDeleteTargetId(id);
     setIsDeleteOpen(true);
   };
 
   const handleConfirmDelete = async () => {
     if (!deleteTargetId) {return;}
+    if (!token) {
+      toast.error('Thiếu token xác thực');
+      return;
+    }
     setIsDeleteLoading(true);
     try {
-      await deleteUser({ cascade: true, id: deleteTargetId });
+      await deleteUser({ cascade: true, id: deleteTargetId, token });
       toast.success('Đã xóa người dùng');
       setIsDeleteOpen(false);
       setDeleteTargetId(null);
@@ -235,11 +356,16 @@ function UsersContent() {
   };
 
   const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} người dùng đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
+    if (!canDelete || !selectionEnabled || resolvedSelectedIds.length === 0) {return;}
+    if (!token) {
+      toast.error('Thiếu token xác thực');
+      return;
+    }
+    if (confirm(`Xóa ${resolvedSelectedIds.length} người dùng đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
       try {
         setIsBulkDeleting(true);
-        const count = selectedIds.length;
-        await bulkDeleteUsers({ cascade: true, ids: selectedIds });
+        const count = resolvedSelectedIds.length;
+        await bulkDeleteUsers({ cascade: true, ids: resolvedSelectedIds, token });
         applyManualSelection([]);
         toast.success(`Đã xóa ${count} người dùng`);
       } catch (error) {
@@ -248,6 +374,38 @@ function UsersContent() {
         setIsBulkDeleting(false);
       }
     }
+  };
+
+  const handleBulkStatusChange = async () => {
+    if (!canEdit || !selectionEnabled || resolvedSelectedIds.length === 0) {return;}
+    if (!token) {
+      toast.error('Thiếu token xác thực');
+      return;
+    }
+    setIsBulkStatusUpdating(true);
+    try {
+      const result = await bulkStatusChange({ ids: resolvedSelectedIds, status: bulkStatus, token });
+      if (result.updated === 0) {
+        toast.info('Không có thay đổi trạng thái');
+      } else {
+        toast.success(`Đã cập nhật ${result.updated} người dùng`);
+      }
+      applyManualSelection([]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsBulkStatusUpdating(false);
+    }
+  };
+
+  const handleExport = () => {
+    if (!rolesData) {
+      toast.error('Đang tải dữ liệu, vui lòng thử lại');
+      return;
+    }
+    if (isExporting) {return;}
+    setIsExporting(true);
+    setExportRequested(true);
   };
 
   const formatLastLogin = (timestamp?: number) => {
@@ -264,18 +422,59 @@ function UsersContent() {
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý tài khoản truy cập vào Admin</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/admin/users/create"><Button className="gap-2"><Plus size={16}/> Thêm User</Button></Link>
+          <Button variant="outline" onClick={handleExport} disabled={isExporting || exportRequested}>
+            {isExporting ? (
+              <>
+                <Loader2 size={16} className="animate-spin mr-2" />
+                Đang xuất...
+              </>
+            ) : (
+              'Xuất CSV'
+            )}
+          </Button>
+          {canCreate && (
+            <Link href="/admin/users/create"><Button className="gap-2"><Plus size={16}/> Thêm User</Button></Link>
+          )}
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  applyManualSelection([]); }} isLoading={isBulkDeleting} />
-      {selectedIds.length > 0 && (
+      {selectionEnabled && canDelete && (
+        <BulkActionBar
+          selectedCount={resolvedSelectedIds.length}
+          onDelete={handleBulkDelete}
+          onClearSelection={() =>{  applyManualSelection([]); }}
+          isLoading={isBulkDeleting}
+        />
+      )}
+      {selectionEnabled && resolvedSelectedIds.length > 0 && (
         <div className="flex flex-wrap gap-2 text-sm">
           <Button variant="outline" size="sm" onClick={() =>{  applyManualSelection(paginatedUsers.map(user => user._id)); }}>
             Chọn trang này
           </Button>
           <Button variant="outline" size="sm" onClick={() =>{  setSelectionMode('all'); }} disabled={isSelectingAll}>
             {isSelectingAll ? 'Đang chọn...' : 'Chọn tất cả kết quả'}
+          </Button>
+        </div>
+      )}
+      {selectionEnabled && canEdit && resolvedSelectedIds.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            className="h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm"
+            value={bulkStatus}
+            onChange={(e) =>{  setBulkStatus(e.target.value as 'Active' | 'Inactive' | 'Banned'); }}
+          >
+            <option value="Active">Hoạt động</option>
+            <option value="Inactive">Không hoạt động</option>
+            <option value="Banned">Bị cấm</option>
+          </select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBulkStatusChange}
+            disabled={isBulkStatusUpdating}
+          >
+            {isBulkStatusUpdating && <Loader2 size={14} className="animate-spin mr-2" />}
+            Đổi trạng thái
           </Button>
         </div>
       )}
@@ -325,22 +524,26 @@ function UsersContent() {
         <Table>
           <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-white dark:[&_th]:bg-slate-900">
             <TableRow>
-              <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>
+              {selectionEnabled && (
+                <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>
+              )}
               <SortableHeader label="Người dùng" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />
               {resolvedVisibleColumns.includes('role') && <SortableHeader label="Vai trò" sortKey="roleName" sortConfig={sortConfig} onSort={handleSort} />}
               {resolvedVisibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
               {resolvedVisibleColumns.includes('phone') && <SortableHeader label="Số điện thoại" sortKey="phone" sortConfig={sortConfig} onSort={handleSort} />}
               {resolvedVisibleColumns.includes('lastLogin') && <SortableHeader label="Đăng nhập cuối" sortKey="lastLogin" sortConfig={sortConfig} onSort={handleSort} />}
-              <TableHead className="text-right">Hành động</TableHead>
+              {showActions && <TableHead className="text-right">Hành động</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {isTableLoading ? (
               Array.from({ length: resolvedUsersPerPage }).map((_, index) => (
                 <TableRow key={`loading-${index}`}>
-                  <TableCell>
-                    <div className="h-4 w-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                  </TableCell>
+                  {selectionEnabled && (
+                    <TableCell>
+                      <div className="h-4 w-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {showAvatar && <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />}
@@ -370,16 +573,20 @@ function UsersContent() {
                       <div className="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
                     </TableCell>
                   )}
-                  <TableCell className="text-right">
-                    <div className="ml-auto h-8 w-20 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                  </TableCell>
+                  {showActions && (
+                    <TableCell className="text-right">
+                      <div className="ml-auto h-8 w-20 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             ) : (
               <>
                 {paginatedUsers.map(user => (
-                  <TableRow key={user._id} className={selectedIds.includes(user._id) ? 'bg-blue-500/5' : ''}>
-                    <TableCell><SelectCheckbox checked={selectedIds.includes(user._id)} onChange={() =>{  toggleSelectItem(user._id); }} /></TableCell>
+                  <TableRow key={user._id} className={resolvedSelectedIds.includes(user._id) ? 'bg-blue-500/5' : ''}>
+                    {selectionEnabled && (
+                      <TableCell><SelectCheckbox checked={resolvedSelectedIds.includes(user._id)} onChange={() =>{  toggleSelectItem(user._id); }} /></TableCell>
+                    )}
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {showAvatar && (
@@ -426,12 +633,18 @@ function UsersContent() {
                     {resolvedVisibleColumns.includes('lastLogin') && (
                       <TableCell className="text-slate-500 text-sm">{formatLastLogin(user.lastLogin)}</TableCell>
                     )}
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Link href={`/admin/users/${user._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(user._id)}><Trash2 size={16}/></Button>
-                      </div>
-                    </TableCell>
+                    {showActions && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {canEdit && (
+                            <Link href={`/admin/users/${user._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
+                          )}
+                          {canDelete && (
+                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(user._id)}><Trash2 size={16}/></Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </>

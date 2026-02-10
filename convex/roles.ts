@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { updateUserStats } from "./users";
+import { requireAdminPermission } from "./lib/permissions";
 
 const roleDoc = v.object({
   _creationTime: v.number(),
@@ -81,8 +82,10 @@ export const create = mutation({
     isSystem: v.optional(v.boolean()),
     name: v.string(),
     permissions: v.record(v.string(), v.array(v.string())),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAdminPermission(ctx, args.token, "roles", "create");
     const existing = await ctx.db
       .query("roles")
       .withIndex("by_name", (q) => q.eq("name", args.name))
@@ -90,8 +93,10 @@ export const create = mutation({
     if (existing) {
       throw new Error(`Tên vai trò "${args.name}" đã tồn tại`);
     }
+    const { token, ...payload } = args;
+    void token;
     const roleId = await ctx.db.insert("roles", {
-      ...args,
+      ...payload,
       isSystem: args.isSystem ?? false,
     });
     
@@ -113,9 +118,12 @@ export const update = mutation({
     id: v.id("roles"),
     name: v.optional(v.string()),
     permissions: v.optional(v.record(v.string(), v.array(v.string()))),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
-    const { id, ...updates } = args;
+    await requireAdminPermission(ctx, args.token, "roles", "edit");
+    const { id, token, ...updates } = args;
+    void token;
     const role = await ctx.db.get(id);
     if (!role) {throw new Error("Không tìm thấy vai trò");}
     if (role.isSystem) {throw new Error("Không thể chỉnh sửa vai trò hệ thống");}
@@ -137,9 +145,44 @@ export const update = mutation({
   returns: v.null(),
 });
 
-export const remove = mutation({
-  args: { cascade: v.optional(v.boolean()), id: v.id("roles") },
+export const clone = mutation({
+  args: {
+    id: v.id("roles"),
+    token: v.string(),
+  },
   handler: async (ctx, args) => {
+    await requireAdminPermission(ctx, args.token, "roles", "create");
+    const role = await ctx.db.get(args.id);
+    if (!role) {throw new Error("Không tìm thấy vai trò");}
+
+    const baseName = `${role.name} (Copy)`;
+    let name = baseName;
+    let counter = 1;
+
+    while (await ctx.db.query("roles").withIndex("by_name", (q) => q.eq("name", name)).unique()) {
+      name = `${baseName} ${counter}`;
+      counter += 1;
+    }
+
+    const roleId = await ctx.db.insert("roles", {
+      color: role.color,
+      description: role.description,
+      isSuperAdmin: false,
+      isSystem: false,
+      name,
+      permissions: role.permissions,
+    });
+
+    await updateRoleStats(ctx, "total", 1);
+    return roleId;
+  },
+  returns: v.id("roles"),
+});
+
+export const remove = mutation({
+  args: { cascade: v.optional(v.boolean()), id: v.id("roles"), token: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdminPermission(ctx, args.token, "roles", "delete");
     const role = await ctx.db.get(args.id);
     if (!role) {throw new Error("Không tìm thấy vai trò");}
     if (role.isSystem) {throw new Error("Không thể xóa vai trò hệ thống");}
@@ -183,6 +226,72 @@ export const remove = mutation({
     if (role.isSuperAdmin) {updates.push(updateRoleStats(ctx, "superAdmin", -1));}
     await Promise.all(updates);
     
+    return null;
+  },
+  returns: v.null(),
+});
+
+// BULK REMOVE: Xóa nhiều role cùng lúc
+export const bulkRemove = mutation({
+  args: { cascade: v.optional(v.boolean()), ids: v.array(v.id("roles")), token: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdminPermission(ctx, args.token, "roles", "delete");
+    const roles = await Promise.all(args.ids.map( async (id) => ctx.db.get(id)));
+    const validRoles = roles.filter((role): role is NonNullable<typeof role> => role !== null);
+
+    if (validRoles.some((role) => role.isSystem)) {
+      throw new Error("Không thể xóa vai trò hệ thống");
+    }
+
+    if (validRoles.length === 0) {
+      return null;
+    }
+
+    const roleIds = validRoles.map((role) => role._id);
+    const userGroups = await Promise.all(
+      roleIds.map((roleId) => ctx.db
+        .query("users")
+        .withIndex("by_role_status", (q) => q.eq("roleId", roleId))
+        .collect())
+    );
+    const usersWithRoles = userGroups.flat();
+
+    if (usersWithRoles.length > 0 && !args.cascade) {
+      throw new Error("Vai trò đang được gán cho người dùng. Vui lòng xác nhận xóa tất cả.");
+    }
+
+    if (args.cascade && usersWithRoles.length > 0) {
+      const logs = await Promise.all(
+        usersWithRoles.map((user) => ctx.db
+          .query("activityLogs")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect())
+      );
+      await Promise.all(logs.flat().map( async (log) => ctx.db.delete(log._id)));
+      await Promise.all(usersWithRoles.map( async (user) => ctx.db.delete(user._id)));
+
+      const statusCounts: Record<string, number> = {};
+      usersWithRoles.forEach((user) => {
+        statusCounts[user.status] = (statusCounts[user.status] || 0) + 1;
+      });
+
+      await Promise.all([
+        updateUserStats(ctx, "total", -usersWithRoles.length),
+        ...Object.entries(statusCounts).map( async ([status, count]) =>
+          updateUserStats(ctx, status, -count)
+        ),
+      ]);
+    }
+
+    await Promise.all(roleIds.map( async (id) => ctx.db.delete(id)));
+
+    const superAdminCount = validRoles.filter((role) => role.isSuperAdmin).length;
+    const systemCount = validRoles.filter((role) => role.isSystem).length;
+    const updates = [updateRoleStats(ctx, "total", -validRoles.length)];
+    if (systemCount > 0) {updates.push(updateRoleStats(ctx, "system", -systemCount));}
+    if (superAdminCount > 0) {updates.push(updateRoleStats(ctx, "superAdmin", -superAdminCount));}
+    await Promise.all(updates);
+
     return null;
   },
   returns: v.null(),

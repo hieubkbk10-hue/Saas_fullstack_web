@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronLeft, ChevronRight, Crown, Edit, Loader2, Plus, Search, Shield, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Crown, Edit, Loader2, Plus, Search, Shield, ShieldOff, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
+import { useAdminAuth } from '../auth/context';
 
 const MODULE_KEY = 'roles';
 
@@ -23,12 +24,62 @@ export default function RolesListPage() {
 }
 
 function RolesContent() {
+  const { hasPermission, isLoading, token } = useAdminAuth();
+  const canView = hasPermission(MODULE_KEY, 'view');
+  const canCreate = hasPermission(MODULE_KEY, 'create');
+  const canEdit = hasPermission(MODULE_KEY, 'edit');
+  const canDelete = hasPermission(MODULE_KEY, 'delete');
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (!canView) {
+    return (
+      <Card className="p-8 text-center">
+        <ShieldOff size={40} className="mx-auto text-slate-400 mb-4" />
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Không có quyền truy cập</h2>
+        <p className="text-slate-500 mt-2">Bạn không có quyền xem module Vai trò.</p>
+        <div className="mt-6">
+          <Link href="/admin/dashboard"><Button>Quay lại Dashboard</Button></Link>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <RolesTable
+      canCreate={canCreate}
+      canDelete={canDelete}
+      canEdit={canEdit}
+      token={token}
+    />
+  );
+}
+
+function RolesTable({
+  canCreate,
+  canDelete,
+  canEdit,
+  token,
+}: {
+  canCreate: boolean;
+  canDelete: boolean;
+  canEdit: boolean;
+  token: string | null;
+}) {
   const rolesData = useQuery(api.roles.listAll);
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const userCountByRole = useQuery(api.roles.getUserCountByRole);
   
   const deleteRole = useMutation(api.roles.remove);
+  const bulkDeleteRoles = useMutation(api.roles.bulkRemove);
+  const cloneRole = useMutation(api.roles.clone);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
@@ -38,7 +89,11 @@ function RolesContent() {
   const [deleteTargetId, setDeleteTargetId] = useState<Id<"roles"> | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [cloningRoleId, setCloningRoleId] = useState<Id<"roles"> | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const selectionEnabled = canDelete;
 
   const isLoading = rolesData === undefined || settingsData === undefined;
 
@@ -57,6 +112,7 @@ function RolesContent() {
 
   const showDescription = enabledFeatures.enableDescription ?? true;
   const showColor = enabledFeatures.enableColor ?? true;
+  const showActions = canEdit || canDelete || canCreate;
 
   // Map roleId to userCount
   const userCountMap = useMemo(() => {
@@ -79,18 +135,29 @@ function RolesContent() {
 
   // Build columns based on features
   const columns = useMemo(() => {
-    const cols = [
-      { key: 'select', label: 'Chọn' },
-      { key: 'name', label: 'Tên vai trò', required: true },
-    ];
+    const cols = [] as { key: string; label: string; required?: boolean }[];
+    if (selectionEnabled) {
+      cols.push({ key: 'select', label: 'Chọn' });
+    }
+    cols.push({ key: 'name', label: 'Tên vai trò', required: true });
     if (showDescription) {
       cols.push({ key: 'description', label: 'Mô tả' });
     }
     cols.push({ key: 'usersCount', label: 'Số người dùng' });
     cols.push({ key: 'type', label: 'Loại' });
-    cols.push({ key: 'actions', label: 'Hành động', required: true });
+    if (showActions) {
+      cols.push({ key: 'actions', label: 'Hành động', required: true });
+    }
     return cols;
-  }, [showDescription]);
+  }, [selectionEnabled, showActions, showDescription]);
+
+  const resolvedVisibleColumns = useMemo(() => (
+    visibleColumns.filter((key) => {
+      if (key === 'select') {return selectionEnabled;}
+      if (key === 'actions') {return showActions;}
+      return true;
+    })
+  ), [visibleColumns, selectionEnabled, showActions]);
 
   // Filter data
   const filteredData = useMemo(() => {
@@ -120,6 +187,7 @@ function RolesContent() {
 
   // Only non-system roles are selectable
   const selectableRoles = paginatedData.filter(r => !r.isSystem);
+  const resolvedSelectedIds = selectionEnabled ? selectedIds : [];
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
@@ -141,14 +209,17 @@ function RolesContent() {
   };
 
   const toggleSelectAll = () => {
+    if (!selectionEnabled) {return;}
     setSelectedIds(selectedIds.length === selectableRoles.length ? [] : selectableRoles.map(r => r._id));
   };
 
   const toggleSelectItem = (id: Id<"roles">) => {
+    if (!selectionEnabled) {return;}
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
   const handleDelete = async (id: Id<"roles">) => {
+    if (!canDelete) {return;}
     const role = roles.find(r => r._id === id);
     if (role?.isSystem) {
       toast.error('Không thể xóa vai trò hệ thống');
@@ -158,11 +229,32 @@ function RolesContent() {
     setIsDeleteOpen(true);
   };
 
+  const handleCloneRole = async (id: Id<"roles">) => {
+    if (!canCreate) {return;}
+    if (!token) {
+      toast.error('Thiếu token xác thực');
+      return;
+    }
+    setCloningRoleId(id);
+    try {
+      await cloneRole({ id, token });
+      toast.success('Đã nhân bản vai trò');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi nhân bản vai trò');
+    } finally {
+      setCloningRoleId(null);
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (!deleteTargetId) {return;}
+    if (!token) {
+      toast.error('Thiếu token xác thực');
+      return;
+    }
     setIsDeleteLoading(true);
     try {
-      await deleteRole({ cascade: true, id: deleteTargetId });
+      await deleteRole({ cascade: true, id: deleteTargetId, token });
       toast.success('Đã xóa vai trò');
       setIsDeleteOpen(false);
       setDeleteTargetId(null);
@@ -173,16 +265,29 @@ function RolesContent() {
     }
   };
 
-  // HIGH-006 FIX: Dùng Promise.all thay vì sequential
-  const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} vai trò đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
-      try {
-        await Promise.all(selectedIds.map( async id => deleteRole({ cascade: true, id })));
-        setSelectedIds([]);
-        toast.success(`Đã xóa ${selectedIds.length} vai trò`);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa vai trò');
-      }
+  const handleBulkDelete = () => {
+    if (resolvedSelectedIds.length === 0) {return;}
+    if (!selectionEnabled) {return;}
+    setIsBulkDeleteOpen(true);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (resolvedSelectedIds.length === 0) {return;}
+    if (!token) {
+      toast.error('Thiếu token xác thực');
+      return;
+    }
+    setIsBulkDeleting(true);
+    try {
+      const count = resolvedSelectedIds.length;
+      await bulkDeleteRoles({ cascade: true, ids: resolvedSelectedIds, token });
+      setSelectedIds([]);
+      setIsBulkDeleteOpen(false);
+      toast.success(`Đã xóa ${count} vai trò`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa vai trò');
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -202,13 +307,22 @@ function RolesContent() {
           <p className="text-sm text-slate-500">Định nghĩa quyền truy cập cho từng nhóm người dùng</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/admin/roles/create">
-            <Button className="gap-2"><Plus size={16}/> Thêm vai trò</Button>
-          </Link>
+          {canCreate && (
+            <Link href="/admin/roles/create">
+              <Button className="gap-2"><Plus size={16}/> Thêm vai trò</Button>
+            </Link>
+          )}
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
+      {selectionEnabled && (
+        <BulkActionBar
+          selectedCount={resolvedSelectedIds.length}
+          onDelete={handleBulkDelete}
+          onClearSelection={() =>{  setSelectedIds([]); }}
+          isLoading={isBulkDeleting}
+        />
+      )}
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
@@ -232,51 +346,51 @@ function RolesContent() {
               <option value="custom">Tùy chỉnh</option>
             </select>
           </div>
-          <ColumnToggle columns={columns} visibleColumns={visibleColumns} onToggle={toggleColumn} />
+          <ColumnToggle columns={columns} visibleColumns={resolvedVisibleColumns} onToggle={toggleColumn} />
         </div>
 
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes('select') && (
+              {resolvedVisibleColumns.includes('select') && (
                 <TableHead className="w-[40px]">
                   <SelectCheckbox 
-                    checked={selectedIds.length === selectableRoles.length && selectableRoles.length > 0} 
+                    checked={resolvedSelectedIds.length === selectableRoles.length && selectableRoles.length > 0} 
                     onChange={toggleSelectAll} 
-                    indeterminate={selectedIds.length > 0 && selectedIds.length < selectableRoles.length} 
+                    indeterminate={resolvedSelectedIds.length > 0 && resolvedSelectedIds.length < selectableRoles.length} 
                   />
                 </TableHead>
               )}
-              {visibleColumns.includes('name') && (
+              {resolvedVisibleColumns.includes('name') && (
                 <SortableHeader label="Tên vai trò" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />
               )}
-              {visibleColumns.includes('description') && showDescription && (
+              {resolvedVisibleColumns.includes('description') && showDescription && (
                 <TableHead>Mô tả</TableHead>
               )}
-              {visibleColumns.includes('usersCount') && (
+              {resolvedVisibleColumns.includes('usersCount') && (
                 <SortableHeader label="Số người dùng" sortKey="usersCount" sortConfig={sortConfig} onSort={handleSort} className="text-center" />
               )}
-              {visibleColumns.includes('type') && (
+              {resolvedVisibleColumns.includes('type') && (
                 <TableHead className="text-center">Loại</TableHead>
               )}
-              {visibleColumns.includes('actions') && (
+              {resolvedVisibleColumns.includes('actions') && (
                 <TableHead className="text-right">Hành động</TableHead>
               )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedData.map(role => (
-              <TableRow key={role._id} className={selectedIds.includes(role._id) ? 'bg-blue-500/5' : ''}>
-                {visibleColumns.includes('select') && (
+              <TableRow key={role._id} className={resolvedSelectedIds.includes(role._id) ? 'bg-blue-500/5' : ''}>
+                {resolvedVisibleColumns.includes('select') && (
                   <TableCell>
                     {role.isSystem ? (
                       <span className="w-4 h-4 block" title="Không thể chọn vai trò hệ thống" />
                     ) : (
-                      <SelectCheckbox checked={selectedIds.includes(role._id)} onChange={() =>{  toggleSelectItem(role._id); }} />
+                      <SelectCheckbox checked={resolvedSelectedIds.includes(role._id)} onChange={() =>{  toggleSelectItem(role._id); }} />
                     )}
                   </TableCell>
                 )}
-                {visibleColumns.includes('name') && (
+                {resolvedVisibleColumns.includes('name') && (
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div 
@@ -292,15 +406,15 @@ function RolesContent() {
                     </div>
                   </TableCell>
                 )}
-                {visibleColumns.includes('description') && showDescription && (
+                {resolvedVisibleColumns.includes('description') && showDescription && (
                   <TableCell className="text-slate-500 max-w-[300px] truncate">{role.description}</TableCell>
                 )}
-                {visibleColumns.includes('usersCount') && (
+                {resolvedVisibleColumns.includes('usersCount') && (
                   <TableCell className="text-center">
                     <Badge variant="secondary">{role.usersCount}</Badge>
                   </TableCell>
                 )}
-                {visibleColumns.includes('type') && (
+                {resolvedVisibleColumns.includes('type') && (
                   <TableCell className="text-center">
                     {role.isSystem ? (
                       <Badge variant="info">Hệ thống</Badge>
@@ -309,22 +423,37 @@ function RolesContent() {
                     )}
                   </TableCell>
                 )}
-                {visibleColumns.includes('actions') && (
+                {resolvedVisibleColumns.includes('actions') && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Link href={`/admin/roles/${role._id}/edit`}>
-                        <Button variant="ghost" size="icon"><Edit size={16}/></Button>
-                      </Link>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className={role.isSystem ? "text-slate-300 cursor-not-allowed" : "text-red-500 hover:text-red-600"} 
-                        onClick={ async () => handleDelete(role._id)}
-                        disabled={role.isSystem}
-                        title={role.isSystem ? "Không thể xóa vai trò hệ thống" : "Xóa"}
-                      >
-                        <Trash2 size={16}/>
-                      </Button>
+                      {canCreate && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { void handleCloneRole(role._id); }}
+                          disabled={cloningRoleId === role._id}
+                          title="Nhân bản"
+                        >
+                          {cloningRoleId === role._id ? <Loader2 size={16} className="animate-spin" /> : <Copy size={16} />}
+                        </Button>
+                      )}
+                      {canEdit && (
+                        <Link href={`/admin/roles/${role._id}/edit`}>
+                          <Button variant="ghost" size="icon"><Edit size={16}/></Button>
+                        </Link>
+                      )}
+                      {canDelete && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className={role.isSystem ? "text-slate-300 cursor-not-allowed" : "text-red-500 hover:text-red-600"} 
+                          onClick={ async () => handleDelete(role._id)}
+                          disabled={role.isSystem}
+                          title={role.isSystem ? "Không thể xóa vai trò hệ thống" : "Xóa"}
+                        >
+                          <Trash2 size={16}/>
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 )}
@@ -332,7 +461,7 @@ function RolesContent() {
             ))}
             {paginatedData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={resolvedVisibleColumns.length} className="text-center py-8 text-slate-500">
                   {searchTerm || filterType ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có vai trò nào'}
                 </TableCell>
               </TableRow>
@@ -382,6 +511,17 @@ function RolesContent() {
         dependencies={deleteInfo?.dependencies ?? []}
         onConfirm={async () => handleConfirmDelete()}
         isLoading={isDeleteLoading}
+      />
+      <DeleteConfirmDialog
+        open={isBulkDeleteOpen}
+        onOpenChange={(open) => {
+          setIsBulkDeleteOpen(open);
+        }}
+        title="Xóa vai trò"
+        itemName={`${resolvedSelectedIds.length} vai trò`}
+        dependencies={[]}
+        onConfirm={async () => handleConfirmBulkDelete()}
+        isLoading={isBulkDeleting}
       />
     </div>
   );

@@ -17,6 +17,7 @@ interface AdminAuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isSessionVerified: boolean; // True khi đã verify session xong (dù valid hay invalid)
+  token: string | null;
   user: AdminUser | null;
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
@@ -106,7 +107,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AdminAuthContext.Provider value={{ hasPermission, isAuthenticated, isLoading, isSessionVerified, login, logout, user }}>
+    <AdminAuthContext.Provider value={{ hasPermission, isAuthenticated, isLoading, isSessionVerified, login, logout, token: activeToken, user }}>
       {children}
     </AdminAuthContext.Provider>
   );

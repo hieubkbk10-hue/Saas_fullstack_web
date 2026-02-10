@@ -121,32 +121,17 @@ export default defineSchema({
     token: v.string(),
   }).index("by_token", ["token"]),
 
-  // 8. adminUsers - Tài khoản admin (khác với users table - đây là auth)
-  adminUsers: defineTable({
-    createdAt: v.number(),
-    email: v.string(),
-    isSuperAdmin: v.optional(v.boolean()),
-    lastLogin: v.optional(v.number()),
-    name: v.string(),
-    passwordHash: v.string(),
-    roleId: v.id("roles"),
-    status: v.union(v.literal("Active"), v.literal("Inactive")),
-  })
-    .index("by_email", ["email"])
-    .index("by_role", ["roleId"])
-    .index("by_status", ["status"]),
-
-  // 9. adminSessions - Sessions cho /admin login
-  adminSessions: defineTable({
-    adminUserId: v.id("adminUsers"),
+  // 8. userSessions - Sessions cho /admin login
+  userSessions: defineTable({
     createdAt: v.number(),
     expiresAt: v.number(),
     token: v.string(),
+    userId: v.id("users"),
   })
     .index("by_token", ["token"])
-    .index("by_adminUser", ["adminUserId"]),
+    .index("by_user", ["userId"]),
 
-  // 10. rateLimitBuckets - Rate limiting buckets
+  // 9. rateLimitBuckets - Rate limiting buckets
   rateLimitBuckets: defineTable({
     key: v.string(), // "mutation:{name}:{identifier}" or "global:{identifier}"
     tokens: v.number(),
@@ -163,6 +148,7 @@ export default defineSchema({
     email: v.string(),
     lastLogin: v.optional(v.number()),
     name: v.string(),
+    passwordHash: v.optional(v.string()),
     phone: v.optional(v.string()),
     roleId: v.id("roles"),
     status: v.union(

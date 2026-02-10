@@ -7,8 +7,9 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2, ShieldOff } from 'lucide-react';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
+import { useAdminAuth } from '../../../auth/context';
 
 const MODULE_KEY = 'roles';
 
@@ -21,6 +22,34 @@ const actionLabels: Record<string, string> = {
 };
 
 export default function RoleEditPage({ params }: { params: Promise<{ id: string }> }) {
+  const { hasPermission, isLoading: isAuthLoading, token } = useAdminAuth();
+  const canEdit = hasPermission(MODULE_KEY, 'edit');
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (!canEdit) {
+    return (
+      <Card className="max-w-4xl mx-auto p-8 text-center">
+        <ShieldOff size={40} className="mx-auto text-slate-400 mb-4" />
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Không có quyền truy cập</h2>
+        <p className="text-slate-500 mt-2">Bạn không có quyền chỉnh sửa vai trò.</p>
+        <div className="mt-6">
+          <Link href="/admin/roles"><Button>Quay lại danh sách</Button></Link>
+        </div>
+      </Card>
+    );
+  }
+
+  return <RoleEditForm params={params} token={token} />;
+}
+
+function RoleEditForm({ params, token }: { params: Promise<{ id: string }>; token: string | null }) {
   const { id } = use(params);
   const router = useRouter();
   
@@ -36,6 +65,7 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isInitialized, setIsInitialized] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const isLoading = roleData === undefined || modulesData === undefined;
 
@@ -107,6 +137,10 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {return;}
+    if (!token) {
+      toast.error('Thiếu token xác thực');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -116,12 +150,17 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
         id: id as Id<"roles">,
         name: name.trim(),
         permissions,
+        token,
       });
       toast.success('Đã cập nhật vai trò');
+      if (shouldRedirect) {
+        router.push('/admin/roles');
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra khi cập nhật vai trò');
     } finally {
       setIsSubmitting(false);
+      setShouldRedirect(false);
     }
   };
 
@@ -289,16 +328,31 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
             {isSystemRole ? 'Đóng' : 'Hủy bỏ'}
           </Button>
           {!isSystemRole && (
-            <Button type="submit" variant="accent" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin mr-2" />
-                  Đang lưu...
-                </>
-              ) : (
-                'Lưu thay đổi'
-              )}
-            </Button>
+            <>
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={() =>{  setShouldRedirect(true); }}
+              >
+                Lưu & quay lại
+              </Button>
+              <Button
+                type="submit"
+                variant="accent"
+                disabled={isSubmitting}
+                onClick={() =>{  setShouldRedirect(false); }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin mr-2" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  'Lưu thay đổi'
+                )}
+              </Button>
+            </>
           )}
         </div>
       </form>

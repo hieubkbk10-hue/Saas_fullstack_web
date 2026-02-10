@@ -1,33 +1,15 @@
 import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
-
-// Simple hash function for password (in production, use bcrypt via action)
-function simpleHash(password: string): string {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.codePointAt(i);
-    if (char === undefined) {
-      continue;
-    }
-    hash = ((hash << 5) - hash) + char;
-    hash &= hash;
-  }
-  return `sh_${Math.abs(hash).toString(16)}_${password.length}`;
-}
-
-function verifyPassword(password: string, hashedPassword: string): boolean {
-  return simpleHash(password) === hashedPassword;
-}
+import { updateUserStats } from "./users";
+import { hashPassword, verifyPassword } from "./lib/password";
 
 // ============================================================
 // SYSTEM AUTH - Hardcoded single account for /system
 // ============================================================
 
-const SYSTEM_CREDENTIALS = {
-  email: "hieubkav",
-  passwordHash: simpleHash("Hieu0948066514"),
-};
+const SYSTEM_EMAIL = process.env.SYSTEM_EMAIL;
+const SYSTEM_PASSWORD_HASH = process.env.SYSTEM_PASSWORD_HASH;
 
 export const verifySystemLogin = mutation({
   args: {
@@ -35,11 +17,16 @@ export const verifySystemLogin = mutation({
     password: v.string(),
   },
   handler: async (ctx, args) => {
-    if (args.email !== SYSTEM_CREDENTIALS.email) {
+    if (!SYSTEM_EMAIL || !SYSTEM_PASSWORD_HASH) {
+      return { message: "Chưa cấu hình tài khoản hệ thống", success: false };
+    }
+
+    if (args.email !== SYSTEM_EMAIL) {
       return { message: "Thông tin đăng nhập không đúng", success: false };
     }
-    
-    if (!verifyPassword(args.password, SYSTEM_CREDENTIALS.passwordHash)) {
+
+    const isPasswordValid = await verifyPassword(args.password, SYSTEM_PASSWORD_HASH);
+    if (!isPasswordValid) {
       return { message: "Thông tin đăng nhập không đúng", success: false };
     }
     
@@ -118,11 +105,11 @@ export const verifyAdminLogin = mutation({
   handler: async (ctx, args) => {
     // Find admin user by email
     const adminUser = await ctx.db
-      .query("adminUsers")
+      .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .unique();
-    
-    if (!adminUser) {
+
+    if (!adminUser || !adminUser.passwordHash) {
       return { message: "Email hoặc mật khẩu không đúng", success: false };
     }
     
@@ -130,16 +117,22 @@ export const verifyAdminLogin = mutation({
       return { message: "Tài khoản đã bị vô hiệu hóa", success: false };
     }
     
-    if (!verifyPassword(args.password, adminUser.passwordHash)) {
+    const passwordValid = await verifyPassword(args.password, adminUser.passwordHash);
+    if (!passwordValid) {
       return { message: "Email hoặc mật khẩu không đúng", success: false };
+    }
+
+    const role = await ctx.db.get(adminUser.roleId);
+    if (!role) {
+      return { message: "Vai trò không tồn tại", success: false };
     }
     
     // Generate session token
     const token = `adm_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     
     // Store session
-    await ctx.db.insert("adminSessions", {
-      adminUserId: adminUser._id,
+    await ctx.db.insert("userSessions", {
+      userId: adminUser._id,
       createdAt: Date.now(),
       expiresAt: Date.now() + 8 * 60 * 60 * 1000,
       token, // 8 hours
@@ -155,7 +148,7 @@ export const verifyAdminLogin = mutation({
       user: {
         email: adminUser.email,
         id: adminUser._id,
-        isSuperAdmin: adminUser.isSuperAdmin ?? false,
+        isSuperAdmin: role.isSuperAdmin ?? false,
         name: adminUser.name,
         roleId: adminUser.roleId,
       },
@@ -183,7 +176,7 @@ export const verifyAdminSession = query({
     }
     
     const session = await ctx.db
-      .query("adminSessions")
+      .query("userSessions")
       .withIndex("by_token", (q) => q.eq("token", args.token))
       .unique();
     
@@ -195,21 +188,24 @@ export const verifyAdminSession = query({
       return { message: "Session đã hết hạn", valid: false };
     }
     
-    const adminUser = await ctx.db.get(session.adminUserId);
+    const adminUser = await ctx.db.get(session.userId);
     if (!adminUser || adminUser.status !== "Active") {
       return { message: "Tài khoản không hợp lệ", valid: false };
     }
     
     const role = await ctx.db.get(adminUser.roleId);
+    if (!role) {
+      return { message: "Role không tồn tại", valid: false };
+    }
     
     return {
       message: "Session hợp lệ",
       user: {
         email: adminUser.email,
         id: adminUser._id,
-        isSuperAdmin: adminUser.isSuperAdmin ?? false,
+        isSuperAdmin: role.isSuperAdmin ?? false,
         name: adminUser.name,
-        permissions: role?.permissions ?? {},
+        permissions: role.permissions ?? {},
         roleId: adminUser.roleId,
       },
       valid: true,
@@ -233,7 +229,7 @@ export const logoutAdmin = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
     const session = await ctx.db
-      .query("adminSessions")
+      .query("userSessions")
       .withIndex("by_token", (q) => q.eq("token", args.token))
       .unique();
     
@@ -269,7 +265,7 @@ export const registerCustomer = mutation({
       email: args.email,
       name: args.name,
       ordersCount: 0,
-      passwordHash: simpleHash(args.password),
+      passwordHash: await hashPassword(args.password),
       phone: args.phone,
       status: "Active",
       totalSpent: 0,
@@ -320,7 +316,8 @@ export const verifyCustomerLogin = mutation({
     if (customer.status !== "Active") {
       return { message: "Tài khoản đã bị vô hiệu hóa", success: false };
     }
-    if (!verifyPassword(args.password, customer.passwordHash)) {
+    const passwordValid = await verifyPassword(args.password, customer.passwordHash);
+    if (!passwordValid) {
       return { message: "Email hoặc mật khẩu không đúng", success: false };
     }
 
@@ -427,32 +424,12 @@ export const createSuperAdmin = mutation({
     password: v.string(),
   },
   handler: async (ctx, args) => {
-    // Check if SuperAdmin already exists
-    const existingSuperAdmin = await ctx.db
-      .query("adminUsers")
-      .filter((q) => q.eq(q.field("isSuperAdmin"), true))
-      .first();
-    
-    if (existingSuperAdmin) {
-      return { message: "SuperAdmin đã tồn tại", success: false };
-    }
-    
-    // Check email unique
-    const existingEmail = await ctx.db
-      .query("adminUsers")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
-      .unique();
-    
-    if (existingEmail) {
-      return { message: "Email đã được sử dụng", success: false };
-    }
-    
     // Get or create SuperAdmin role
     let superAdminRole = await ctx.db
       .query("roles")
       .filter((q) => q.eq(q.field("isSuperAdmin"), true))
       .first();
-    
+
     if (!superAdminRole) {
       const roleId = await ctx.db.insert("roles", {
         color: "#ef4444",
@@ -464,17 +441,44 @@ export const createSuperAdmin = mutation({
       });
       superAdminRole = await ctx.db.get(roleId);
     }
-    
+
+    if (!superAdminRole) {
+      return { message: "Không thể tạo vai trò SuperAdmin", success: false };
+    }
+
+    // Check if SuperAdmin already exists
+    const existingSuperAdmin = await ctx.db
+      .query("users")
+      .withIndex("by_role_status", (q) => q.eq("roleId", superAdminRole!._id))
+      .first();
+
+    if (existingSuperAdmin) {
+      return { message: "SuperAdmin đã tồn tại", success: false };
+    }
+
+    // Check email unique
+    const existingEmail = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .unique();
+
+    if (existingEmail) {
+      return { message: "Email đã được sử dụng", success: false };
+    }
+
+    const passwordHash = await hashPassword(args.password);
+
     // Create SuperAdmin user
-    await ctx.db.insert("adminUsers", {
-      createdAt: Date.now(),
+    await ctx.db.insert("users", {
       email: args.email,
-      isSuperAdmin: true,
       name: args.name ?? "Super Admin",
-      passwordHash: simpleHash(args.password),
-      roleId: superAdminRole!._id,
+      passwordHash,
+      roleId: superAdminRole._id,
       status: "Active",
     });
+
+    await updateUserStats(ctx, "total", 1);
+    await updateUserStats(ctx, "Active", 1);
     
     return { message: "Đã tạo SuperAdmin thành công", success: true };
   },
@@ -487,15 +491,22 @@ export const createSuperAdmin = mutation({
 export const getSuperAdmin = query({
   args: {},
   handler: async (ctx) => {
-    const superAdmin = await ctx.db
-      .query("adminUsers")
+    const superAdminRole = await ctx.db
+      .query("roles")
       .filter((q) => q.eq(q.field("isSuperAdmin"), true))
       .first();
-    
+
+    if (!superAdminRole) {return null;}
+
+    const superAdmin = await ctx.db
+      .query("users")
+      .withIndex("by_role_status", (q) => q.eq("roleId", superAdminRole._id))
+      .first();
+
     if (!superAdmin) {return null;}
-    
+
     return {
-      createdAt: superAdmin.createdAt,
+      createdAt: superAdmin._creationTime,
       email: superAdmin.email,
       id: superAdmin._id,
       name: superAdmin.name,
@@ -521,43 +532,51 @@ export const updateSuperAdminCredentials = mutation({
     password: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const superAdmin = await ctx.db
-      .query("adminUsers")
+    const superAdminRole = await ctx.db
+      .query("roles")
       .filter((q) => q.eq(q.field("isSuperAdmin"), true))
       .first();
-    
+
+    if (!superAdminRole) {
+      return { message: "SuperAdmin chưa được tạo", success: false };
+    }
+
+    const superAdmin = await ctx.db
+      .query("users")
+      .withIndex("by_role_status", (q) => q.eq("roleId", superAdminRole._id))
+      .first();
+
     if (!superAdmin) {
       return { message: "SuperAdmin chưa được tạo", success: false };
     }
-    
-    const updates: Partial<Doc<"adminUsers">> = {};
-    
+
+    const updates: Partial<Doc<"users">> = {};
+
     if (args.email && args.email !== superAdmin.email) {
-      // Check email unique
       const emailToCheck = args.email;
       const existingEmail = await ctx.db
-        .query("adminUsers")
+        .query("users")
         .withIndex("by_email", (q) => q.eq("email", emailToCheck))
         .unique();
-      
+
       if (existingEmail) {
         return { message: "Email đã được sử dụng", success: false };
       }
       updates.email = args.email;
     }
-    
+
     if (args.password) {
-      updates.passwordHash = simpleHash(args.password);
+      updates.passwordHash = await hashPassword(args.password);
     }
-    
+
     if (args.name) {
       updates.name = args.name;
     }
-    
+
     if (Object.keys(updates).length > 0) {
       await ctx.db.patch(superAdmin._id, updates);
     }
-    
+
     return { message: "Đã cập nhật thông tin SuperAdmin", success: true };
   },
   returns: v.object({
@@ -579,7 +598,7 @@ export const checkPermission = query({
   handler: async (ctx, args) => {
     // Verify session first
     const session = await ctx.db
-      .query("adminSessions")
+      .query("userSessions")
       .withIndex("by_token", (q) => q.eq("token", args.token))
       .unique();
     
@@ -587,19 +606,19 @@ export const checkPermission = query({
       return { allowed: false, reason: "Session không hợp lệ" };
     }
     
-    const adminUser = await ctx.db.get(session.adminUserId);
+    const adminUser = await ctx.db.get(session.userId);
     if (!adminUser || adminUser.status !== "Active") {
       return { allowed: false, reason: "Tài khoản không hợp lệ" };
-    }
-    
-    // SuperAdmin has all permissions
-    if (adminUser.isSuperAdmin) {
-      return { allowed: true, reason: "SuperAdmin" };
     }
     
     const role = await ctx.db.get(adminUser.roleId);
     if (!role) {
       return { allowed: false, reason: "Role không tồn tại" };
+    }
+
+    // SuperAdmin has all permissions
+    if (role.isSuperAdmin) {
+      return { allowed: true, reason: "SuperAdmin" };
     }
     
     // Check if module is enabled

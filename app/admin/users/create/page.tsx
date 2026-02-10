@@ -6,14 +6,43 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label } from '../../components/ui';
 import { ImageUploader } from '../../components/ImageUploader';
+import { useAdminAuth } from '../../auth/context';
 
 const MODULE_KEY = 'users';
 
 export default function UserCreatePage() {
+  const { hasPermission, isLoading: isAuthLoading, token } = useAdminAuth();
+  const canCreate = hasPermission(MODULE_KEY, 'create');
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (!canCreate) {
+    return (
+      <Card className="max-w-2xl mx-auto p-8 text-center">
+        <ShieldOff size={40} className="mx-auto text-slate-400 mb-4" />
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Không có quyền truy cập</h2>
+        <p className="text-slate-500 mt-2">Bạn không có quyền tạo người dùng mới.</p>
+        <div className="mt-6">
+          <Link href="/admin/users"><Button>Quay lại danh sách</Button></Link>
+        </div>
+      </Card>
+    );
+  }
+
+  return <UserCreateForm token={token} />;
+}
+
+function UserCreateForm({ token }: { token: string | null }) {
   const router = useRouter();
   const rolesData = useQuery(api.roles.listAll);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
@@ -22,9 +51,11 @@ export default function UserCreatePage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [avatar, setAvatar] = useState<string | undefined>();
   const [roleId, setRoleId] = useState<Id<"roles"> | ''>('');
-  const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
+  const [status, setStatus] = useState<'Active' | 'Inactive' | 'Banned'>('Active');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isLoading = rolesData === undefined || fieldsData === undefined;
@@ -43,6 +74,10 @@ export default function UserCreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) {
+      toast.error('Thiếu token xác thực');
+      return;
+    }
     if (!validateEmail(email)) {
       toast.error('Email không hợp lệ');
       return;
@@ -51,15 +86,25 @@ export default function UserCreatePage() {
       toast.error('Vui lòng chọn vai trò');
       return;
     }
+    if (password.length < 6) {
+      toast.error('Mật khẩu tối thiểu 6 ký tự');
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error('Xác nhận mật khẩu không khớp');
+      return;
+    }
     setIsSubmitting(true);
     try {
       await createUser({
         avatar: enabledFields.has('avatar') && avatar ? avatar : undefined,
         email,
         name,
+        password,
         phone: enabledFields.has('phone') && phone ? phone : undefined,
         roleId: roleId,
         status,
+        token,
       });
       toast.success('Đã tạo người dùng mới');
       router.push('/admin/users');
@@ -110,6 +155,29 @@ export default function UserCreatePage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Mật khẩu <span className="text-red-500">*</span></Label>
+                <Input
+                  type="password"
+                  required
+                  placeholder="Nhập mật khẩu..."
+                  value={password}
+                  onChange={(e) =>{  setPassword(e.target.value); }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Xác nhận mật khẩu <span className="text-red-500">*</span></Label>
+                <Input
+                  type="password"
+                  required
+                  placeholder="Nhập lại mật khẩu..."
+                  value={confirmPassword}
+                  onChange={(e) =>{  setConfirmPassword(e.target.value); }}
+                />
+              </div>
+            </div>
+
             {enabledFields.has('phone') && (
               <div className="space-y-2">
                 <Label>Số điện thoại</Label>
@@ -153,10 +221,11 @@ export default function UserCreatePage() {
                 <select 
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={status}
-                  onChange={(e) =>{  setStatus(e.target.value as 'Active' | 'Inactive'); }}
+                  onChange={(e) =>{  setStatus(e.target.value as 'Active' | 'Inactive' | 'Banned'); }}
                 >
                   <option value="Active">Hoạt động</option>
                   <option value="Inactive">Không hoạt động</option>
+                  <option value="Banned">Bị cấm</option>
                 </select>
               </div>
             </div>

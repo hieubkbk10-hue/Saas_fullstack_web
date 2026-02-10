@@ -20,6 +20,8 @@ import type * as customers from "../customers.js";
 import type * as dataManager from "../dataManager.js";
 import type * as homeComponents from "../homeComponents.js";
 import type * as lib_helpers from "../lib/helpers.js";
+import type * as lib_password from "../lib/password.js";
+import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as media from "../media.js";
@@ -77,6 +79,8 @@ declare const fullApi: ApiFromModules<{
   dataManager: typeof dataManager;
   homeComponents: typeof homeComponents;
   "lib/helpers": typeof lib_helpers;
+  "lib/password": typeof lib_password;
+  "lib/permissions": typeof lib_permissions;
   "lib/rateLimit": typeof lib_rateLimit;
   "lib/validators": typeof lib_validators;
   media: typeof media;

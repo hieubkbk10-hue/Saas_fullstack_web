@@ -4,6 +4,8 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { userStatus } from "./lib/validators";
+import { requireAdminPermission } from "./lib/permissions";
+import { hashPassword } from "./lib/password";
 
 const userDoc = v.object({
   _creationTime: v.number(),
@@ -17,9 +19,21 @@ const userDoc = v.object({
   status: userStatus,
 });
 
+const sanitizeUser = (user: Doc<"users">) => {
+  const { passwordHash, ...safeUser } = user;
+  void passwordHash;
+  return safeUser;
+};
+
 export const list = query({
   args: { paginationOpts: paginationOptsValidator },
-  handler: async (ctx, args) => ctx.db.query("users").paginate(args.paginationOpts),
+  handler: async (ctx, args) => {
+    const result = await ctx.db.query("users").paginate(args.paginationOpts);
+    return {
+      ...result,
+      page: result.page.map(sanitizeUser),
+    };
+  },
   returns: v.object({
     continueCursor: v.string(),
     isDone: v.boolean(),
@@ -30,7 +44,10 @@ export const list = query({
 // USR-003 FIX: Thêm limit để tránh memory overflow
 export const listAll = query({
   args: {},
-  handler: async (ctx) => ctx.db.query("users").take(500),
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").take(500);
+    return users.map(sanitizeUser);
+  },
   returns: v.array(userDoc),
 });
 
@@ -79,7 +96,53 @@ export const listAdminWithOffset = query({
       );
     }
 
-    return users.slice(offset, offset + limit);
+    return users.slice(offset, offset + limit).map(sanitizeUser);
+  },
+  returns: v.array(userDoc),
+});
+
+export const listAdminExport = query({
+  args: {
+    limit: v.optional(v.number()),
+    roleId: v.optional(v.id("roles")),
+    search: v.optional(v.string()),
+    status: v.optional(userStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    let users: Doc<"users">[] = [];
+    if (args.roleId && args.status) {
+      users = await ctx.db
+        .query("users")
+        .withIndex("by_role_status", (q) => q.eq("roleId", args.roleId!).eq("status", args.status!))
+        .order("desc")
+        .take(limit);
+    } else if (args.roleId) {
+      users = await ctx.db
+        .query("users")
+        .withIndex("by_role_status", (q) => q.eq("roleId", args.roleId!))
+        .order("desc")
+        .take(limit);
+    } else if (args.status) {
+      users = await ctx.db
+        .query("users")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .order("desc")
+        .take(limit);
+    } else {
+      users = await ctx.db.query("users").order("desc").take(limit);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      users = users.filter((user) =>
+        user.name.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower) ||
+        (user.phone?.toLowerCase().includes(searchLower) ?? false)
+      );
+    }
+
+    return users.slice(0, limit).map(sanitizeUser);
   },
   returns: v.array(userDoc),
 });
@@ -202,16 +265,22 @@ export const countByStatus = query({
 
 export const getById = query({
   args: { id: v.id("users") },
-  handler: async (ctx, args) => ctx.db.get(args.id),
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.id);
+    return user ? sanitizeUser(user) : null;
+  },
   returns: v.union(userDoc, v.null()),
 });
 
 export const getByEmail = query({
   args: { email: v.string() },
-  handler: async (ctx, args) => ctx.db
+  handler: async (ctx, args) => {
+    const user = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email))
-      .unique(),
+      .unique();
+    return user ? sanitizeUser(user) : null;
+  },
   returns: v.union(userDoc, v.null()),
 });
 
@@ -221,12 +290,18 @@ export const getByRoleAndStatus = query({
     roleId: v.id("roles"),
     status: userStatus,
   },
-  handler: async (ctx, args) => ctx.db
+  handler: async (ctx, args) => {
+    const result = await ctx.db
       .query("users")
       .withIndex("by_role_status", (q) =>
         q.eq("roleId", args.roleId).eq("status", args.status)
       )
-      .paginate(args.paginationOpts),
+      .paginate(args.paginationOpts);
+    return {
+      ...result,
+      page: result.page.map(sanitizeUser),
+    };
+  },
   returns: v.object({
     continueCursor: v.string(),
     isDone: v.boolean(),
@@ -236,10 +311,16 @@ export const getByRoleAndStatus = query({
 
 export const getByStatus = query({
   args: { paginationOpts: paginationOptsValidator, status: userStatus },
-  handler: async (ctx, args) => ctx.db
+  handler: async (ctx, args) => {
+    const result = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", args.status))
-      .paginate(args.paginationOpts),
+      .paginate(args.paginationOpts);
+    return {
+      ...result,
+      page: result.page.map(sanitizeUser),
+    };
+  },
   returns: v.object({
     continueCursor: v.string(),
     isDone: v.boolean(),
@@ -269,11 +350,17 @@ export const create = mutation({
     avatar: v.optional(v.string()),
     email: v.string(),
     name: v.string(),
+    password: v.string(),
     phone: v.optional(v.string()),
     roleId: v.id("roles"),
     status: userStatus,
+    token: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAdminPermission(ctx, args.token, "users", "create");
+    if (args.password.length < 6) {
+      throw new Error("Mật khẩu tối thiểu 6 ký tự");
+    }
     const existing = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email))
@@ -281,7 +368,10 @@ export const create = mutation({
     if (existing) {
       throw new Error("Email already exists");
     }
-    const userId = await ctx.db.insert("users", { ...args });
+    const { password, token, ...payload } = args;
+    void token;
+    const passwordHash = await hashPassword(password);
+    const userId = await ctx.db.insert("users", { ...payload, passwordHash });
     
     // Update counters
     await Promise.all([
@@ -304,9 +394,12 @@ export const update = mutation({
     phone: v.optional(v.string()),
     roleId: v.optional(v.id("roles")),
     status: v.optional(userStatus),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
-    const { id, ...updates } = args;
+    await requireAdminPermission(ctx, args.token, "users", "edit");
+    const { id, token, ...updates } = args;
+    void token;
     const user = await ctx.db.get(id);
     if (!user) {throw new Error("User not found");}
     
@@ -324,6 +417,57 @@ export const update = mutation({
   returns: v.null(),
 });
 
+export const changePassword = mutation({
+  args: {
+    id: v.id("users"),
+    password: v.string(),
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await requireAdminPermission(ctx, args.token, "users", "edit");
+    if (args.password.length < 6) {
+      throw new Error("Mật khẩu tối thiểu 6 ký tự");
+    }
+    const user = await ctx.db.get(args.id);
+    if (!user) {throw new Error("User not found");}
+    const passwordHash = await hashPassword(args.password);
+    await ctx.db.patch(args.id, { passwordHash });
+    return null;
+  },
+  returns: v.null(),
+});
+
+export const bulkStatusChange = mutation({
+  args: {
+    ids: v.array(v.id("users")),
+    status: userStatus,
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await requireAdminPermission(ctx, args.token, "users", "edit");
+    const users = await Promise.all(args.ids.map( async (id) => ctx.db.get(id)));
+    const validUsers = users.filter((u): u is NonNullable<typeof u> => u !== null);
+    const targetUsers = validUsers.filter((u) => u.status !== args.status);
+    if (targetUsers.length === 0) {
+      return { updated: 0 };
+    }
+
+    const statusCounts = targetUsers.reduce<Record<string, number>>((acc, user) => {
+      acc[user.status] = (acc[user.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    await Promise.all(targetUsers.map( async (user) => ctx.db.patch(user._id, { status: args.status })));
+
+    const updates = Object.entries(statusCounts).map(([status, count]) => updateUserStats(ctx, status, -count));
+    updates.push(updateUserStats(ctx, args.status, targetUsers.length));
+    await Promise.all(updates);
+
+    return { updated: targetUsers.length };
+  },
+  returns: v.object({ updated: v.number() }),
+});
+
 export const updateLastLogin = mutation({
   args: { id: v.id("users") },
   handler: async (ctx, args) => {
@@ -334,8 +478,9 @@ export const updateLastLogin = mutation({
 });
 
 export const remove = mutation({
-  args: { cascade: v.optional(v.boolean()), id: v.id("users") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("users"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdminPermission(ctx, args.token, "users", "delete");
     const user = await ctx.db.get(args.id);
     if (!user) {throw new Error("User not found");}
 
@@ -405,8 +550,9 @@ export const getDeleteInfo = query({
 
 // USR-005 FIX: Bulk delete with parallel execution
 export const bulkRemove = mutation({
-  args: { cascade: v.optional(v.boolean()), ids: v.array(v.id("users")) },
+  args: { cascade: v.optional(v.boolean()), ids: v.array(v.id("users")), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdminPermission(ctx, args.token, "users", "delete");
     const users = await Promise.all(args.ids.map( async (id) => ctx.db.get(id)));
     const validUsers = users.filter((u): u is NonNullable<typeof u> => u !== null);
 
