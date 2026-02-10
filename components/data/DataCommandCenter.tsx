@@ -11,6 +11,7 @@ import { Card, Badge } from '@/app/admin/components/ui';
 import { DependencyTree } from './DependencyTree';
 import { FactoryResetDialog } from './FactoryResetDialog';
 import { QuickActionsCard } from './QuickActionsCard';
+import { SeedWizardDialog } from './SeedWizardDialog';
 import { TableDetailsCard } from './TableDetailsCard';
 
 type PresetType = 'minimal' | 'standard' | 'large' | 'demo';
@@ -33,6 +34,7 @@ export function DataCommandCenter() {
   const [isFactoryResetting, setIsFactoryResetting] = useState(false);
   const [currentPreset, setCurrentPreset] = useState<string | null>(null);
   const [showCustomDialog, setShowCustomDialog] = useState(false);
+  const [showSeedWizard, setShowSeedWizard] = useState(false);
   const [showFactoryResetDialog, setShowFactoryResetDialog] = useState(false);
   const [resetProgress, setResetProgress] = useState<null | { current: number; label: string; total: number }>(null);
 
@@ -192,6 +194,7 @@ export function DataCommandCenter() {
         onResetAll={handleResetAll}
         onFactoryReset={() => setShowFactoryResetDialog(true)}
         onOpenCustomDialog={() => setShowCustomDialog(true)}
+        onOpenSeedWizard={() => setShowSeedWizard(true)}
         isSeeding={isGlobalSeeding}
         isClearing={isGlobalClearing}
         isFactoryResetting={isFactoryResetting}
@@ -233,6 +236,12 @@ export function DataCommandCenter() {
         open={showCustomDialog}
         onOpenChange={setShowCustomDialog}
         onComplete={() => setShowCustomDialog(false)}
+      />
+
+      <SeedWizardDialog
+        open={showSeedWizard}
+        onOpenChange={setShowSeedWizard}
+        onComplete={() => setShowSeedWizard(false)}
       />
 
       <FactoryResetDialog

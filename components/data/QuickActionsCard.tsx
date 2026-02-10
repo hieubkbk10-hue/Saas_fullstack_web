@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle, Database, RefreshCw, Settings, Sparkles, Package, Rocket, Zap, Trash2 } from 'lucide-react';
+import { AlertTriangle, Database, RefreshCw, Settings, Sparkles, Package, Rocket, Zap, Trash2, Wand2 } from 'lucide-react';
 import { Button, Card, cn } from '@/app/admin/components/ui';
 
 interface QuickActionsCardProps {
@@ -10,6 +10,7 @@ interface QuickActionsCardProps {
   onResetAll: () => void;
   onFactoryReset: () => void;
   onOpenCustomDialog: () => void;
+  onOpenSeedWizard: () => void;
   isSeeding: boolean;
   isClearing: boolean;
   isFactoryResetting: boolean;
@@ -53,6 +54,7 @@ export function QuickActionsCard({
   onResetAll,
   onFactoryReset,
   onOpenCustomDialog,
+  onOpenSeedWizard,
   isSeeding,
   isClearing,
   isFactoryResetting,
@@ -68,15 +70,26 @@ export function QuickActionsCard({
           </h3>
           <p className="text-xs text-slate-500">Seed nhanh theo preset hoặc clear/reset toàn bộ</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onOpenCustomDialog}
-          disabled={isBusy}
-          className="gap-2"
-        >
-          <Settings size={14} /> Custom Seed
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenSeedWizard}
+            disabled={isBusy}
+            className="gap-2"
+          >
+            <Wand2 size={14} /> Seed Wizard
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenCustomDialog}
+            disabled={isBusy}
+            className="gap-2"
+          >
+            <Settings size={14} /> Custom Seed
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
