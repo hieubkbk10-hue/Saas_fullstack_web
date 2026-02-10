@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Briefcase, CreditCard, FileText, Heart, LayoutTemplate, Mail, Menu, MessageSquare, Package, Search, ShoppingCart, Ticket, User } from 'lucide-react';
+import { Briefcase, CreditCard, FileText, Heart, LayoutTemplate, Mail, Menu, MessageSquare, Package, ShoppingCart, Ticket, User } from 'lucide-react';
 import { Card, CardContent } from '@/app/admin/components/ui';
 import { useI18n } from '../i18n/context';
 
@@ -90,12 +90,6 @@ const experiences = [
     href: '/system/experiences/contact',
     icon: Mail,
     title: 'Trang liên hệ',
-  },
-  {
-    description: 'Search layout, filters, sorting và results display.',
-    href: '/system/experiences/search',
-    icon: Search,
-    title: 'Tìm kiếm & Lọc',
   },
   {
     description: 'Danh sách voucher, chương trình khuyến mãi và countdown.',
