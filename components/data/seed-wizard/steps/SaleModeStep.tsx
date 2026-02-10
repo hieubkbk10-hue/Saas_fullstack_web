@@ -60,6 +60,17 @@ export function SaleModeStep({ value, onChange }: SaleModeStepProps) {
           </button>
         ))}
       </div>
+
+      {value === 'contact' && (
+        <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-200">
+          Sẽ tắt các modules: cart, orders, wishlist, promotions (không cần giỏ hàng/đơn).
+        </div>
+      )}
+      {value === 'affiliate' && (
+        <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-200">
+          Sẽ tắt các modules: cart, orders. Sản phẩm sẽ có affiliateLink.
+        </div>
+      )}
     </div>
   );
 }

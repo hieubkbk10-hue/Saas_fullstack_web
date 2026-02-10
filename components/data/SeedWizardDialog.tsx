@@ -22,16 +22,28 @@ import { SaleModeStep } from './seed-wizard/steps/SaleModeStep';
 import { ProductTypeStep } from './seed-wizard/steps/ProductTypeStep';
 import { ProductVariantsStep } from './seed-wizard/steps/ProductVariantsStep';
 import { BusinessInfoStep } from './seed-wizard/steps/BusinessInfoStep';
+import { ExperiencePresetStep } from './seed-wizard/steps/ExperiencePresetStep';
+import { QuickConfigStep } from './seed-wizard/steps/QuickConfigStep';
+import { DataScaleStep } from './seed-wizard/steps/DataScaleStep';
 import { ReviewStep } from './seed-wizard/steps/ReviewStep';
 import {
   buildModuleSelection,
   buildSeedConfigs,
   getBaseModules,
+  getScaleSummary,
 } from './seed-wizard/wizard-presets';
+import {
+  getDefaultExperiencePresetKey,
+  getExperiencePreset,
+  getExperiencePresets,
+} from './seed-wizard/experience-presets';
+import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS } from '@/lib/orders/statuses';
 import type {
   BusinessInfo,
   DigitalDeliveryType,
+  ExperiencePresetKey,
   ProductType,
+  QuickConfig,
   SaleMode,
   WizardState,
 } from './seed-wizard/types';
@@ -44,10 +56,25 @@ type SeedWizardDialogProps = {
 
 const DEFAULT_BUSINESS_INFO: BusinessInfo = {
   address: '',
+  brandColor: '#3b82f6',
+  businessType: 'LocalBusiness',
   email: 'contact@example.com',
+  openingHours: 'Mo-Su 08:00-22:00',
   phone: '',
   siteName: 'VietAdmin',
+  socialFacebook: '',
   tagline: '',
+};
+
+const DEFAULT_QUICK_CONFIG: QuickConfig = {
+  commentsDefaultStatus: 'Pending',
+  lowStockThreshold: 10,
+  orderStatusPreset: 'standard',
+  ordersPerPage: 20,
+  postsDefaultStatus: 'draft',
+  postsPerPage: 10,
+  productsDefaultStatus: 'Draft',
+  productsPerPage: 12,
 };
 
 const DEFAULT_STATE: WizardState = {
@@ -55,8 +82,11 @@ const DEFAULT_STATE: WizardState = {
   clearBeforeSeed: true,
   dataScale: 'medium',
   digitalDeliveryType: 'account',
+  experiencePresetKey: getDefaultExperiencePresetKey('landing') as ExperiencePresetKey,
   extraFeatures: new Set(),
   productType: 'physical',
+  quickConfig: DEFAULT_QUICK_CONFIG,
+  quickConfigSkipped: false,
   saleMode: 'cart',
   variantEnabled: false,
   variantImages: 'inherit',
@@ -85,8 +115,9 @@ export function SeedWizardDialog({ open, onOpenChange, onComplete }: SeedWizardD
   const seedBulk = useMutation(api.seedManager.seedBulk);
   const clearAll = useMutation(api.seedManager.clearAll);
   const setModuleSetting = useMutation(api.admin.modules.setModuleSetting);
+  const toggleModuleFeature = useMutation(api.admin.modules.toggleModuleFeature);
   const setSettings = useMutation(api.settings.setMultiple);
-  const toggleModule = useMutation(api.admin.modules.toggleModule);
+  const toggleModuleWithCascade = useMutation(api.admin.modules.toggleModuleWithCascade);
   const updateProduct = useMutation(api.products.update);
 
   useEffect(() => {
@@ -100,18 +131,26 @@ export function SeedWizardDialog({ open, onOpenChange, onComplete }: SeedWizardD
   const hasProducts = selectedModules.includes('products');
   const hasPosts = selectedModules.includes('posts');
   const hasServices = selectedModules.includes('services');
+  const hasOrders = selectedModules.includes('orders');
+  const hasComments = selectedModules.includes('comments');
 
   const steps = useMemo(() => {
     const list = ['website', 'extras'];
     if (hasProducts) {
       list.push('saleMode', 'productType', 'variants');
     }
-    list.push('business', 'review');
+    list.push('business', 'experience');
+    if (hasProducts || hasOrders || hasPosts || hasComments) {
+      list.push('quickConfig');
+    }
+    list.push('dataScale', 'review');
     return list;
-  }, [hasProducts]);
+  }, [hasComments, hasOrders, hasPosts, hasProducts]);
 
   useEffect(() => {
     setCurrentStep(0);
+    const presetKey = getDefaultExperiencePresetKey(state.websiteType) as ExperiencePresetKey;
+    setState((prev) => ({ ...prev, experiencePresetKey: presetKey }));
   }, [state.websiteType, hasProducts]);
 
   useEffect(() => {
@@ -193,39 +232,88 @@ export function SeedWizardDialog({ open, onOpenChange, onComplete }: SeedWizardD
         : 'Chỉ hàng vật lý';
     const variantLabel = state.variantEnabled ? state.variantPresetKey : 'Không có phiên bản';
 
-    return [
-      { label: 'Website', value: state.websiteType },
-      { label: 'Chế độ bán', value: saleModeLabel },
-      { label: 'Loại sản phẩm', value: productTypeLabel },
-      { label: 'Phiên bản SP', value: variantLabel },
-      { label: 'Tên website', value: state.businessInfo.siteName || 'VietAdmin' },
+    const websiteLabel = state.websiteType === 'landing'
+      ? 'Chỉ giới thiệu'
+      : state.websiteType === 'blog'
+        ? 'Viết blog/tin tức'
+        : state.websiteType === 'catalog'
+          ? 'Trưng bày sản phẩm'
+          : state.websiteType === 'ecommerce'
+            ? 'Bán hàng online'
+            : 'Cung cấp dịch vụ';
+    const dataScaleLabel = state.dataScale === 'low'
+      ? 'Ít (test nhanh)'
+      : state.dataScale === 'medium'
+        ? 'Vừa (dev)'
+        : 'Nhiều (demo)';
+
+    const items = [
+      { label: 'Website', value: websiteLabel },
     ];
+
+    if (hasProducts) {
+      items.push(
+        { label: 'Chế độ bán', value: saleModeLabel },
+        { label: 'Loại sản phẩm', value: productTypeLabel },
+        { label: 'Phiên bản SP', value: variantLabel }
+      );
+    }
+
+    items.push(
+      { label: 'Tên website', value: state.businessInfo.siteName || 'VietAdmin' },
+      { label: 'Quy mô dữ liệu', value: dataScaleLabel }
+    );
+
+    return items;
   };
+
+  const experienceOptions = useMemo(() => getExperiencePresets(state.websiteType), [state.websiteType]);
+  const experiencePreset = useMemo(
+    () => getExperiencePreset(state.websiteType, state.experiencePresetKey),
+    [state.experiencePresetKey, state.websiteType]
+  );
 
   const syncModules = async (desiredModules: string[]) => {
     if (!modules) {
       return;
     }
 
-    const moduleMap = new Map(modules.map((module) => [module.key, module]));
+    const moduleMap = new Map(modules.map((moduleItem) => [moduleItem.key, moduleItem]));
     const desiredSet = new Set(desiredModules);
 
     const toEnable = modules
-      .filter((module) => desiredSet.has(module.key) && !module.enabled)
-      .map((module) => module.key);
+      .filter((moduleItem) => desiredSet.has(moduleItem.key) && !moduleItem.enabled)
+      .map((moduleItem) => moduleItem.key);
 
     const toDisable = modules
-      .filter((module) => !desiredSet.has(module.key) && module.enabled && !module.isCore)
-      .map((module) => module.key);
+      .filter((moduleItem) => !desiredSet.has(moduleItem.key) && moduleItem.enabled && !moduleItem.isCore)
+      .map((moduleItem) => moduleItem.key);
 
     const orderedEnable = orderModulesByDependencies(toEnable, moduleMap);
 
+    const getCascadeKeys = (moduleKey: string) => {
+      const cascade = new Set<string>();
+      const visit = (key: string) => {
+        for (const moduleItem of modules) {
+          if (moduleItem.dependencies?.includes(key)) {
+            if (!cascade.has(moduleItem.key)) {
+              cascade.add(moduleItem.key);
+              visit(moduleItem.key);
+            }
+          }
+        }
+      };
+      visit(moduleKey);
+      return Array.from(cascade).filter((key) => !moduleMap.get(key)?.isCore);
+    };
+
     for (const moduleKey of orderedEnable) {
-      await toggleModule({ enabled: true, key: moduleKey });
+      await toggleModuleWithCascade({ enabled: true, key: moduleKey });
     }
 
     for (const moduleKey of toDisable) {
-      await toggleModule({ enabled: false, key: moduleKey });
+      const cascadeKeys = getCascadeKeys(moduleKey).filter((key) => !desiredSet.has(key));
+      await toggleModuleWithCascade({ enabled: false, key: moduleKey, cascadeKeys });
     }
   };
 
@@ -287,31 +375,103 @@ export function SeedWizardDialog({ open, onOpenChange, onComplete }: SeedWizardD
 
       await seedBulk({ configs: seedConfigs });
 
-      await setModuleSetting({ moduleKey: 'products', settingKey: 'saleMode', value: state.saleMode });
-      await setModuleSetting({ moduleKey: 'products', settingKey: 'variantEnabled', value: state.variantEnabled });
-      await setModuleSetting({ moduleKey: 'products', settingKey: 'variantPricing', value: state.variantPricing });
-      await setModuleSetting({ moduleKey: 'products', settingKey: 'variantStock', value: state.variantStock });
-      await setModuleSetting({ moduleKey: 'products', settingKey: 'variantImages', value: state.variantImages });
-      await setModuleSetting({ moduleKey: 'products', settingKey: 'outOfStockDisplay', value: 'blur' });
-      await setModuleSetting({ moduleKey: 'products', settingKey: 'imageChangeAnimation', value: 'fade' });
-      await setModuleSetting({
-        moduleKey: 'products',
-        settingKey: 'enableDigitalProducts',
-        value: state.productType !== 'physical',
-      });
-      await setModuleSetting({
-        moduleKey: 'products',
-        settingKey: 'defaultDigitalDeliveryType',
-        value: state.digitalDeliveryType,
-      });
+      if (hasProducts) {
+        await setModuleSetting({ moduleKey: 'products', settingKey: 'saleMode', value: state.saleMode });
+        await setModuleSetting({ moduleKey: 'products', settingKey: 'variantEnabled', value: state.variantEnabled });
+        await setModuleSetting({ moduleKey: 'products', settingKey: 'variantPricing', value: state.variantPricing });
+        await setModuleSetting({ moduleKey: 'products', settingKey: 'variantStock', value: state.variantStock });
+        await setModuleSetting({ moduleKey: 'products', settingKey: 'variantImages', value: state.variantImages });
+        await setModuleSetting({ moduleKey: 'products', settingKey: 'outOfStockDisplay', value: 'blur' });
+        await setModuleSetting({ moduleKey: 'products', settingKey: 'imageChangeAnimation', value: 'fade' });
+        await setModuleSetting({
+          moduleKey: 'products',
+          settingKey: 'enableDigitalProducts',
+          value: state.productType !== 'physical',
+        });
+        await setModuleSetting({
+          moduleKey: 'products',
+          settingKey: 'defaultDigitalDeliveryType',
+          value: state.digitalDeliveryType,
+        });
+        await setModuleSetting({
+          moduleKey: 'products',
+          settingKey: 'productsPerPage',
+          value: state.quickConfig.productsPerPage,
+        });
+        await setModuleSetting({
+          moduleKey: 'products',
+          settingKey: 'lowStockThreshold',
+          value: state.quickConfig.lowStockThreshold,
+        });
+        await setModuleSetting({
+          moduleKey: 'products',
+          settingKey: 'defaultStatus',
+          value: state.quickConfig.productsDefaultStatus,
+        });
+      }
+
+      if (hasOrders) {
+        const preset = state.quickConfig.orderStatusPreset || DEFAULT_ORDER_STATUS_PRESET;
+        await setModuleSetting({ moduleKey: 'orders', settingKey: 'orderStatusPreset', value: preset });
+        await setModuleSetting({
+          moduleKey: 'orders',
+          settingKey: 'orderStatuses',
+          value: JSON.stringify(ORDER_STATUS_PRESETS[preset], null, 2),
+        });
+        await setModuleSetting({
+          moduleKey: 'orders',
+          settingKey: 'ordersPerPage',
+          value: state.quickConfig.ordersPerPage,
+        });
+        await setModuleSetting({
+          moduleKey: 'orders',
+          settingKey: 'shippingMethods',
+          value: JSON.stringify([
+            { id: 'standard', label: 'Giao hàng tiêu chuẩn', description: '2-4 ngày', fee: 30000, estimate: '2-4 ngày' },
+            { id: 'express', label: 'Giao hàng nhanh', description: 'Trong 24h', fee: 50000, estimate: 'Trong 24h' },
+          ], null, 2),
+        });
+        await setModuleSetting({
+          moduleKey: 'orders',
+          settingKey: 'paymentMethods',
+          value: JSON.stringify([
+            { id: 'cod', label: 'COD', description: 'Thanh toán khi nhận hàng', type: 'COD' },
+            { id: 'bank', label: 'Chuyển khoản ngân hàng', description: 'Chuyển khoản trước khi giao', type: 'BankTransfer' },
+            { id: 'vietqr', label: 'VietQR', description: 'Quét mã QR để thanh toán', type: 'VietQR' },
+          ], null, 2),
+        });
+      }
+
+      if (hasPosts) {
+        await setModuleSetting({
+          moduleKey: 'posts',
+          settingKey: 'postsPerPage',
+          value: state.quickConfig.postsPerPage,
+        });
+        await setModuleSetting({
+          moduleKey: 'posts',
+          settingKey: 'defaultStatus',
+          value: state.quickConfig.postsDefaultStatus,
+        });
+      }
+
+      if (hasComments) {
+        await setModuleSetting({
+          moduleKey: 'comments',
+          settingKey: 'defaultStatus',
+          value: state.quickConfig.commentsDefaultStatus,
+        });
+      }
 
       await setSettings({
         settings: [
           { group: 'site', key: 'site_name', value: state.businessInfo.siteName || 'VietAdmin' },
           { group: 'site', key: 'site_tagline', value: state.businessInfo.tagline || '' },
+          { group: 'site', key: 'site_brand_color', value: state.businessInfo.brandColor || '#3b82f6' },
           { group: 'contact', key: 'contact_email', value: state.businessInfo.email || 'contact@example.com' },
           { group: 'contact', key: 'contact_phone', value: state.businessInfo.phone || '' },
           { group: 'contact', key: 'contact_address', value: state.businessInfo.address || '' },
+          { group: 'social', key: 'social_facebook', value: state.businessInfo.socialFacebook || '' },
           {
             group: 'seo',
             key: 'seo_title',
@@ -320,8 +480,47 @@ export function SeedWizardDialog({ open, onOpenChange, onComplete }: SeedWizardD
               : state.businessInfo.siteName,
           },
           { group: 'seo', key: 'seo_description', value: state.businessInfo.tagline || '' },
+          { group: 'seo', key: 'seo_business_type', value: state.businessInfo.businessType || 'LocalBusiness' },
+          { group: 'seo', key: 'seo_opening_hours', value: state.businessInfo.openingHours || '' },
         ],
       });
+
+      await toggleModuleFeature({ enabled: true, featureKey: 'enableContact', moduleKey: 'settings' });
+      await toggleModuleFeature({ enabled: true, featureKey: 'enableSEO', moduleKey: 'settings' });
+      await toggleModuleFeature({ enabled: true, featureKey: 'enableSocial', moduleKey: 'settings' });
+      await toggleModuleFeature({ enabled: false, featureKey: 'enableMail', moduleKey: 'settings' });
+
+      const experienceSettings = Object.entries(experiencePreset.settings)
+        .filter(([key]) => {
+          if (key === 'product_detail_ui' || key === 'products_list_ui') {
+            return hasProducts;
+          }
+          if (key === 'cart_ui') {
+            return selectedModules.includes('cart');
+          }
+          if (key === 'checkout_ui') {
+            return hasOrders;
+          }
+          if (key === 'wishlist_ui') {
+            return selectedModules.includes('wishlist');
+          }
+          if (key === 'posts_list_ui' || key === 'posts_detail_ui') {
+            return hasPosts;
+          }
+          if (key === 'services_list_ui' || key === 'services_detail_ui') {
+            return hasServices;
+          }
+          return true;
+        })
+        .map(([key, value]) => ({
+          group: 'experience',
+          key,
+          value,
+        }));
+
+      if (experienceSettings.length > 0) {
+        await setSettings({ settings: experienceSettings });
+      }
 
       await applyProductOverrides();
 
@@ -338,6 +537,37 @@ export function SeedWizardDialog({ open, onOpenChange, onComplete }: SeedWizardD
   };
 
   const summary = buildSummary();
+  const dataScaleLabel = summary.find((item) => item.label === 'Quy mô dữ liệu')?.value ?? '';
+  const scaleSummary = getScaleSummary(selectedModules, state.dataScale);
+  const moduleConfigs = [
+    state.quickConfigSkipped
+      ? { label: 'Cấu hình nhanh', value: 'Dùng mặc định' }
+      : null,
+    hasProducts
+      ? { label: 'SP / trang', value: `${state.quickConfig.productsPerPage}` }
+      : null,
+    hasProducts
+      ? { label: 'Ngưỡng tồn kho', value: `${state.quickConfig.lowStockThreshold}` }
+      : null,
+    hasProducts
+      ? { label: 'Trạng thái SP', value: state.quickConfig.productsDefaultStatus }
+      : null,
+    hasOrders
+      ? { label: 'Preset đơn hàng', value: state.quickConfig.orderStatusPreset }
+      : null,
+    hasOrders
+      ? { label: 'Đơn / trang', value: `${state.quickConfig.ordersPerPage}` }
+      : null,
+    hasPosts
+      ? { label: 'Bài viết / trang', value: `${state.quickConfig.postsPerPage}` }
+      : null,
+    hasPosts
+      ? { label: 'Trạng thái bài viết', value: state.quickConfig.postsDefaultStatus }
+      : null,
+    hasComments
+      ? { label: 'Trạng thái bình luận', value: state.quickConfig.commentsDefaultStatus }
+      : null,
+  ].filter(Boolean) as { label: string; value: string }[];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -406,15 +636,46 @@ export function SeedWizardDialog({ open, onOpenChange, onComplete }: SeedWizardD
             />
           )}
 
+          {stepKey === 'experience' && (
+            <ExperiencePresetStep
+              options={experienceOptions}
+              value={state.experiencePresetKey}
+              onChange={(experiencePresetKey) => setState((prev) => ({ ...prev, experiencePresetKey }))}
+            />
+          )}
+
+          {stepKey === 'quickConfig' && (
+            <QuickConfigStep
+              value={state.quickConfig}
+              showComments={hasComments}
+              showOrders={hasOrders}
+              showPosts={hasPosts}
+              showProducts={hasProducts}
+              onChange={(quickConfig) => setState((prev) => ({ ...prev, quickConfig, quickConfigSkipped: false }))}
+              onSkip={() => {
+                setState((prev) => ({ ...prev, quickConfigSkipped: true }));
+                nextStep();
+              }}
+            />
+          )}
+
+          {stepKey === 'dataScale' && (
+            <DataScaleStep
+              value={state.dataScale}
+              summary={scaleSummary}
+              onChange={(dataScale) => setState((prev) => ({ ...prev, dataScale }))}
+            />
+          )}
+
           {stepKey === 'review' && (
             <ReviewStep
               clearBeforeSeed={state.clearBeforeSeed}
-              dataScale={state.dataScale}
+              dataScaleLabel={dataScaleLabel}
+              experienceSummary={experiencePreset.summary}
+              moduleConfigs={moduleConfigs}
               modules={selectedModules}
               summary={summary}
               onClearChange={(value) => setState((prev) => ({ ...prev, clearBeforeSeed: value }))}
-              onScaleChange={(value) => setState((prev) => ({ ...prev, dataScale: value }))}
-              state={state}
             />
           )}
         </div>
@@ -455,9 +716,9 @@ function orderModulesByDependencies(
       return;
     }
     visiting.add(moduleKey);
-    const module = moduleMap.get(moduleKey);
-    const dependencies = module?.dependencies ?? [];
-    if ((module?.dependencyType ?? 'all') === 'all') {
+    const moduleInfo = moduleMap.get(moduleKey);
+    const dependencies = moduleInfo?.dependencies ?? [];
+    if ((moduleInfo?.dependencyType ?? 'all') === 'all') {
       for (const dependency of dependencies) {
         if (modules.includes(dependency) || moduleMap.get(dependency)?.enabled) {
           visit(dependency);

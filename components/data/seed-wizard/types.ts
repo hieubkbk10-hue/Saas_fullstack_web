@@ -16,10 +16,27 @@ export type DataScale = 'low' | 'medium' | 'high';
 
 export type BusinessInfo = {
   address: string;
+  brandColor: string;
+  businessType: string;
   email: string;
+  openingHours: string;
   phone: string;
   siteName: string;
+  socialFacebook: string;
   tagline: string;
+};
+
+export type ExperiencePresetKey = string;
+
+export type QuickConfig = {
+  commentsDefaultStatus: 'Pending' | 'Approved';
+  lowStockThreshold: number;
+  orderStatusPreset: 'simple' | 'standard' | 'advanced';
+  ordersPerPage: number;
+  postsDefaultStatus: 'draft' | 'published';
+  postsPerPage: number;
+  productsDefaultStatus: 'Draft' | 'Active';
+  productsPerPage: number;
 };
 
 export type WizardState = {
@@ -27,8 +44,11 @@ export type WizardState = {
   clearBeforeSeed: boolean;
   dataScale: DataScale;
   digitalDeliveryType: DigitalDeliveryType;
+  experiencePresetKey: ExperiencePresetKey;
   extraFeatures: Set<string>;
   productType: ProductType;
+  quickConfig: QuickConfig;
+  quickConfigSkipped: boolean;
   saleMode: SaleMode;
   variantEnabled: boolean;
   variantImages: VariantImages;

@@ -31,31 +31,31 @@ const CORE_MODULES = ['settings', 'menus', 'homepage', 'media', 'users', 'roles'
 
 export const WEBSITE_TYPE_OPTIONS: WebsiteTypeOption[] = [
   {
-    description: 'Landing page, brochure',
+    description: 'Website giới thiệu đơn giản (không cần quản trị nội dung phức tạp).',
     key: 'landing',
     label: 'Chỉ giới thiệu',
     modules: [...CORE_MODULES],
   },
   {
-    description: 'Bài viết, danh mục bài',
+    description: 'Blog/tin tức với bài viết, danh mục, bình luận.',
     key: 'blog',
     label: 'Viết blog/tin tức',
     modules: [...CORE_MODULES, 'posts', 'postCategories', 'comments'],
   },
   {
-    description: 'Có SP nhưng KHÔNG có giỏ hàng',
+    description: 'Trưng bày sản phẩm nhưng không có giỏ hàng/đặt mua.',
     key: 'catalog',
     label: 'Trưng bày sản phẩm',
     modules: [...CORE_MODULES, 'products', 'productCategories'],
   },
   {
-    description: 'Giỏ hàng + đặt hàng + thanh toán',
+    description: 'Bán hàng online với giỏ hàng, đơn hàng, thanh toán.',
     key: 'ecommerce',
     label: 'Bán hàng online',
     modules: [...CORE_MODULES, 'products', 'productCategories', 'orders', 'cart', 'customers'],
   },
   {
-    description: 'Salon, tư vấn, sửa chữa',
+    description: 'Dịch vụ (salon, tư vấn, sửa chữa) với danh mục dịch vụ.',
     key: 'services',
     label: 'Cung cấp dịch vụ',
     modules: [...CORE_MODULES, 'services', 'serviceCategories'],
@@ -64,13 +64,13 @@ export const WEBSITE_TYPE_OPTIONS: WebsiteTypeOption[] = [
 
 export const EXTRA_FEATURE_OPTIONS: ExtraFeatureOption[] = [
   {
-    description: 'Viết tin tức, chia sẻ kiến thức',
+    description: 'Thêm module bài viết để chia sẻ tin tức, kiến thức.',
     key: 'posts',
     label: 'Bài viết & Blog',
     modules: ['posts', 'postCategories'],
   },
   {
-    description: 'Khách hàng comment, rate sản phẩm',
+    description: 'Khách có thể comment/rate sản phẩm hoặc bài viết.',
     key: 'comments',
     label: 'Bình luận & Đánh giá',
     modules: ['comments'],
@@ -78,27 +78,27 @@ export const EXTRA_FEATURE_OPTIONS: ExtraFeatureOption[] = [
     requiredPosts: false,
   },
   {
-    description: 'Nút “Thêm vào yêu thích”',
+    description: 'Bật wishlist để khách lưu sản phẩm yêu thích.',
     key: 'wishlist',
     label: 'Yêu thích',
     modules: ['wishlist'],
     requiredProducts: true,
   },
   {
-    description: 'Voucher, flash sale, combo',
+    description: 'Voucher/flash sale/combo cho sản phẩm.',
     key: 'promotions',
     label: 'Mã giảm giá',
     modules: ['promotions'],
     requiredProducts: true,
   },
   {
-    description: 'Gửi notification cho khách',
+    description: 'Gửi notification cho khách hàng.',
     key: 'notifications',
     label: 'Thông báo',
     modules: ['notifications'],
   },
   {
-    description: 'Ngoài sản phẩm còn có dịch vụ',
+    description: 'Ngoài sản phẩm còn cung cấp dịch vụ.',
     key: 'services',
     label: 'Dịch vụ',
     modules: ['services', 'serviceCategories'],
@@ -185,6 +185,20 @@ const SCALE_QUANTITIES: Record<DataScale, Record<string, number>> = {
   },
 };
 
+const SCALE_SUMMARY_ITEMS: Array<{ key: string; label: string }> = [
+  { key: 'products', label: 'Sản phẩm' },
+  { key: 'productCategories', label: 'Danh mục SP' },
+  { key: 'orders', label: 'Đơn hàng' },
+  { key: 'customers', label: 'Khách hàng' },
+  { key: 'posts', label: 'Bài viết' },
+  { key: 'postCategories', label: 'Danh mục bài viết' },
+  { key: 'services', label: 'Dịch vụ' },
+  { key: 'serviceCategories', label: 'Danh mục dịch vụ' },
+  { key: 'comments', label: 'Bình luận' },
+  { key: 'promotions', label: 'Khuyến mãi' },
+  { key: 'wishlist', label: 'Wishlist' },
+];
+
 export function getBaseModules(websiteType: WizardState['websiteType']): string[] {
   return WEBSITE_TYPE_OPTIONS.find((option) => option.key === websiteType)?.modules ?? [];
 }
@@ -254,5 +268,16 @@ export function buildSeedConfigs(selectedModules: string[], scale: DataScale) {
     .map((moduleKey) => ({
       module: moduleKey,
       quantity: quantities[moduleKey],
+    }));
+}
+
+export function getScaleSummary(selectedModules: string[], scale: DataScale) {
+  const quantities = SCALE_QUANTITIES[scale];
+  const moduleSet = new Set(selectedModules);
+  return SCALE_SUMMARY_ITEMS
+    .filter((item) => moduleSet.has(item.key))
+    .map((item) => ({
+      label: item.label,
+      value: quantities[item.key],
     }));
 }
